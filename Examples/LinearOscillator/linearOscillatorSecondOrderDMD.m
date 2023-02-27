@@ -9,8 +9,6 @@ close all
 addpath('../../lib')
 
 %% Generate trajectories of a linear oscillator
-rng(1); % Seed for random number generator, 
-% added to ensure this code generates the exact same plot as the paper
 
 n = 1; % Output dimension
 order = 2; % Order of the system (code only for order = 2)
@@ -185,26 +183,3 @@ set(gcf, 'PaperPosition', [0 0 6 5]);
 set(gca,'FontSize',12,'TickLabelInterpreter','latex');
 filename = ['secondOrderLiouvilleLinearOscillatorNoise' num2str(standardDeviation) 'VectorField.pdf'];
 saveas(gcf,filename);
-
-% plot(RMS_direct,'*')
-% set(gcf, 'PaperPositionMode', 'manual');
-% set(gcf, 'PaperUnits', 'inches');
-% set(gcf, 'PaperSize', [6 5]);
-% set(gcf, 'PaperPosition', [0 0 6 5]);
-% set(gca,'FontSize',12,'TickLabelInterpreter','latex');
-% xlabel('Trial','Interpreter','latex');
-% ylabel('RMS error','Interpreter','latex');
-% filename = 'secondOrderLiouvilleLinearOscillatorRMSDirect.pdf';
-% saveas(gcf,filename);
-% 
-% figure
-% plot(RMS_indirect,'*')
-% set(gcf, 'PaperPositionMode', 'manual');
-% set(gcf, 'PaperUnits', 'inches');
-% set(gcf, 'PaperSize', [6 5]);
-% set(gcf, 'PaperPosition', [0 0 6 5]);
-% set(gca,'FontSize',12,'TickLabelInterpreter','latex');
-% xlabel('Trial','Interpreter','latex');
-% ylabel('RMS error','Interpreter','latex');
-% filename = 'secondOrderLiouvilleLinearOscillatorRMSIndirect.pdf';
-% saveas(gcf,filename);

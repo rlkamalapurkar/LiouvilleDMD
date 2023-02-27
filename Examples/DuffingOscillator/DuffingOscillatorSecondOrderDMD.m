@@ -186,7 +186,7 @@ if numTrials > 1
     set(gcf, 'PaperSize', [6 5]);
     set(gcf, 'PaperPosition', [0 0 6 5]);
     set(gca,'FontSize',12,'TickLabelInterpreter','latex');
-    filename = ['comparisonDuffingNoise' num2str(standardDeviation) 'BoxPlot.pdf'];
+    filename = ['comparisonNoise' num2str(standardDeviation) 'DuffingBox.pdf'];
     saveas(gcf,filename);
 end
 

@@ -200,7 +200,7 @@ set(gcf, 'PaperUnits', 'inches');
 set(gcf, 'PaperSize', [6 5]);
 set(gcf, 'PaperPosition', [0 0 6 5]);
 if printGeneralization
-    filename = 'LiouvilleBeamIndirectGeneralizationError';
+    filename = 'comparisonNoise0Beam';
     saveas(fig1,filename,'pdf');
 end
 
