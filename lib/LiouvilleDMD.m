@@ -103,7 +103,7 @@ L = diag(D); % Eigenvalues of the finite-rank representation
 % Eigenfunctions evaluated at x
 ef = @(x) C.'*squeeze(pagemtimes(K.K(x,W),S));
 % Reconstruction function:
-r = @(t,x0) Z*((C.'*squeeze(pagemtimes(K.K(x0,W),S))).*exp(L*t)); 
+r = @(t,x0) real(Z*((C.'*squeeze(pagemtimes(K.K(x0,W),S))).*exp(L*t))); 
 % Vector field:
 f = @(x) real(Z*((C.'*squeeze(pagemtimes(K.K(x,W),S))).*L));
 end

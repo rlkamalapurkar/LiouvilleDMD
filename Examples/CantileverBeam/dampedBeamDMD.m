@@ -10,7 +10,7 @@ close all
 addpath('../../lib');
 
 %% Parameters
-ShowVideo = 1;
+ShowVideo = 0;
 SaveVideo = 0;
 
 %% Kernel 
@@ -26,7 +26,6 @@ h = longestPeriod/100;
 skip = 1;
 % Segment single trajectory into multiple trajectories
 Snapshots = zeros(1,2*size(msh.Nodes,1)*size(resT.Displacement.x(1:skip:end,:),1),size(resT.Displacement.x(1:skip:end,:),2));
-Snapshots(1,:,:) = [resT.Displacement.x(1:skip:end,:);resT.Displacement.y(1:skip:end,:);resT.Velocity.x(1:skip:end,:);resT.Velocity.y(1:skip:end,:)];
 Dimension = length(Snapshots(1,:,1));
 TotalLength = length(Snapshots(1,1,:));
 NumNodes = size(msh.Nodes(:,1:skip:end),2);
@@ -41,8 +40,33 @@ for j = 1:TotalTrajectories
 end
 
 %% Liouville DMD
-[~,~,~,directReconstruct,vectorField] = ...
-    LiouvilleDMD(K,Trajectories,SampleTime,[],Regularization);
+[~,~,~,r,f] = LiouvilleDMD(K,Trajectories,SampleTime,[],Regularization);
+
+%% Generalization
+[V,~,~] = cantileverBeamUndampedTransient(15,0);
+initialState = [V.Displacement.x(:,1);
+                V.Displacement.y(:,1);
+                zeros(2*NumNodes,1)];
+Time = ((1:size(V.Displacement.x,2))-1)*h;
+[~,indirectGeneralizationState] = ode45(@(t,x) f(x), Time, initialState);
+supNorm = max(norm([V.Displacement.x(:); V.Displacement.y(:)]));
+fig1 = figure();
+indirectGeneralizationError = zeros(size(Time));
+for i = 1:size(V.Displacement.x,2)
+    indirectGeneralizationErrorNorm = norm([indirectGeneralizationState(1,1:NumNodes).' - V.Displacement.x(:,i),...
+        indirectGeneralizationState(1,NumNodes+1:2*NumNodes).' - V.Displacement.y(:,i)]);
+    indirectGeneralizationError(i) = indirectGeneralizationErrorNorm/supNorm;
+end
+plot(Time,indirectGeneralizationError,'LineWidth',1.5)
+ylabel('Relative RMS Error','Interpreter','LaTeX');
+xlabel('Time [s]','Interpreter','LaTeX');
+set(gca,'fontsize',12,'TickLabelInterpreter','latex');
+set(gcf, 'PaperPositionMode', 'manual');
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperSize', [6 5]);
+set(gcf, 'PaperPosition', [0 0 6 5]);
+filename = 'BeamDMDIndirectGeneralizationError';
+%saveas(fig1,filename,'pdf');
 
 %% Video
 if ShowVideo || SaveVideo
@@ -56,7 +80,7 @@ if ShowVideo || SaveVideo
     InitialState = Trajectories(1:end,1,1);
     for i = 1:150
         t = (i-1)*h;
-        ZZ = real(directReconstruct(t,InitialState));
+        ZZ = r(t,InitialState);
         error_y = ZZ(NumNodes+1:2*NumNodes,1) - resT.Displacement.y(1:skip:end,i);
         error_x = ZZ(1:NumNodes,1) - resT.Displacement.x(1:skip:end,i);
         error_norm_pointwise = sqrt(error_x.^2 + error_y.^2);

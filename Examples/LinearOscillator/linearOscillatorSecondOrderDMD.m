@@ -4,6 +4,8 @@
 %
 % © Rushikesh Kamalapurkar, Ben Russo, and Joel Rosenfeld
 %
+clear all
+close all
 addpath('../../lib')
 
 %% Generate trajectories of a linear oscillator
@@ -22,7 +24,6 @@ X = linspace(-range,range,pointsPerDim);
 x0 = [XX(:) YY(:)].'; % Initial conditions
 
 % Parameters of the trajectories dataset
-standardDeviation = 0.01; % Noise standard deviation
 numTraj = size(x0,2); % Number of trajectories
 deltaT = 0.5; % Sampling interval
 tFinal = 5*ones(1,numTraj); % Time horizon
@@ -34,103 +35,144 @@ SampleTime = repmat((0:deltaT:tFinal(1)).',1,numTraj);
 
 xDot = @(t,x) [x(2);-2*x(1)]; % System dynamics
 
-T = 0:0.01:10; % Time horizon for Reconstruction
+T = 0:0.01:20; % Time horizon for Reconstruction
 
-numTrials = 500; % Number of Monte-Carlo trials
+% MCMC parameters
+% Noise standard deviation
+standardDeviation = 0.01; 
+if standardDeviation == 0
+    numTrials = 1;
+else
+    numTrials = 500; % Number of Monte-Carlo trials
+end
 % Matrices to store results of Monte-Carlo trials
-YR_direct = zeros(n,length(T),numTrials); % Direct reconstruction
-YR_indirect = zeros(stateDimension,length(T),numTrials); % Indirect reconstruction
+YRd1 = zeros(stateDimension,length(T),numTrials); % Direct reconstruction
+YRi1 = zeros(stateDimension,length(T),numTrials); % Indirect reconstruction
+YRd2 = zeros(n,length(T),numTrials); % Direct reconstruction
+YRi2 = zeros(n,length(T),numTrials); % Indirect reconstruction
 Y = zeros(stateDimension,length(T),numTrials); % True trajectory
 X = zeros(stateDimension,numTrials); % Initial conditions
-RMS_direct = zeros(numTrials,1); %
-RMS_indirect = zeros(numTrials,1); %
+RMSd1 = zeros(numTrials,1); %
+RMSi1 = zeros(numTrials,1); %
+RMSd2 = zeros(numTrials,1); %
+RMSi2 = zeros(numTrials,1); %
 
-%% Kernel
+%% Kernels (see the class Kernel for details)
 %%%%%%%%%%%%%%%(R2020b or newer version of MATLAB needed)%%%%%%%%%%%%%%%%%
-mu = 1000;
-K = KernelRKHS('Gaussian',mu);
-Regularization=1e-6; % Exponential: 0.0001;
+% Second order
+mu2 = 100;
+K2 = KernelRKHS('Gaussian',mu2);
+Regularization2=1e-8; % Exponential: 0.0001;
+
+% First order
+mu1 = 100;
+K1 = KernelRKHS('Gaussian',mu2);
+Regularization1=1e-6; % Exponential: 0.0001;
 
 %% DMD Monte Carlo trials
 for j=1:numTrials
-% Create dataset for DMD 
+% Generate dataset for DMD 
 %%% type 'help SecondOrderLiouvilleDMD' to see required dataset format %%%
-Trajectories=zeros(n,size(SampleTime,1),numTraj);
+% Output and derivatives at initial time, for second order DMD
+Output=zeros(n,size(SampleTime,1),numTraj);
 Derivatives=zeros(n,numTraj);
+% Full state for first order DMD
 State=zeros(stateDimension,size(SampleTime,1),numTraj);
-
+% Generate data
 for i=1:numTraj
     T_i = SampleTime(~isnan(SampleTime(:,i)),i);
     [~,y]=ode45(@(t,x) xDot(t,x), T_i, x0(:,i));
-    Trajectories(:,~isnan(SampleTime(:,i)),i) = y(:,1).' + standardDeviation*randn(size(y(:,1).'));
-    State(:,~isnan(SampleTime(:,i)),i) = y.';
+    Output(:,~isnan(SampleTime(:,i)),i) = y(:,1).' + standardDeviation*randn(size(y(:,1).'));
+    State(:,~isnan(SampleTime(:,i)),i) = y.' + standardDeviation*randn(size(y.'));
     Derivatives(:,i) = y(1,2) + standardDeviation*randn;
 end
 
 %% Liouville DMD
-[~,~,~,g,f] = SecondOrderLiouvilleDMD(K,Trajectories,SampleTime,Derivatives,Regularization);
+% Second order
+[~,~,~,r2,f2] = SecondOrderLiouvilleDMD(K2,Output,SampleTime,Derivatives,Regularization2);
 
 %%%%%%%%%%%%%%%%% First order DMD for comparison %%%%%%%%%%%%%%%%%%%%%%%%%
-% mu = 10;
-% K1 = @(X,Y) exp(-1/mu*(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - ...
-%    2*pagemtimes(X,'transpose',Y,'none')));
-% [~,~,~,ReconstructionFunction] = LiouvilleDMD(K1,State,SampleTime);
+[~,~,~,r1,f1] = LiouvilleDMD(K1,State,SampleTime,1,Regularization1);
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %% Reconstruction
-% Actual trajectory
-x = -1+2*rand(stateDimension,1); % A random initial condition in the unit hypercube
-[~,y]=ode45(@(t,x) xDot(t,x), T, x); % True trajectory
-yr_direct = zeros(size(y(:,1:n))); % Array to store reconstructed trajectory
-%yrFirstOrder = zeros(size(y)); % For first order DMD
-% Direct reconstruction
-for i=1:numel(T)
-    yr_direct(i,:) = real(g(T(i), x(1), x(2)));
-    %yrFirstOrder(i,:) = real(ReconstructionFunction(T(i),x)); % for first order DMD
-end
-% Indirect reconstruction
-odefun = @(t,x) [x(2);real(f(x(1)))];
-[~,yr_indirect]=ode45(@(t,x) odefun(t,x), T, x); % True trajectory
 
+if standardDeviation ~= 0
+    % Random initial condition in [-1,1] x [-1,1]
+    x = -1+2*rand(stateDimension,1);
+else
+    x = [-1;1];
+end
+
+% Actual trajectory
+[~,y]=ode45(@(t,x) xDot(t,x),T,x);
+
+% Direct Reconstruction
+yrd2 = zeros(numel(T),1);
+yrd1 = zeros(numel(T),size(y,2));
+for i=1:numel(T)
+    yrd2(i,:) = r2(T(i),x(1),x(2));
+    yrd1(i,:) = r1(T(i),x);
+end
+
+% Indirect reconstruction first order
+[~,yri1]=ode45(@(t,x) f1(x),T,x);
+
+% Indirect reconstruction second order
+f22 = @(x) [x(2);f2(x(1))];
+[~,yri2]=ode45(@(t,x) f22(x),T,x);
+
+% Store results for jth trial
 X(:,j)=x; % Store initial condition
 Y(:,:,j) = y.'; % Store true trajectory
-YR_direct(:,:,j) = yr_direct; % Store reconstructed trajectory
-YR_indirect(:,:,j) = yr_indirect.'; % Store true trajectory
-RMS_direct(j) = rms((yr_direct-y(:,1:n))./max(abs(y(:,1:n)))); % Store relative RMS error
-RMS_indirect(j) = rms((yr_indirect(:,1:n)-y(:,1:n))./max(abs(y(:,1:n)))); % Store relative RMS error
+
+% Store reconstructed state trajectories
+YRd1(:,:,j) = yrd1.';        % First order, direct
+YRi1(:,:,j) = yri1.';        % First order, indirect
+YRd2(:,:,j) = yrd2.';        % Second order, direct
+YRi2(:,:,j) = yri2(:,1:n).'; % Second order, indirect
+
+% Store relative RMS output prediction errors
+RMSd1(j) = rms((yrd1(:,1:n)-y(1:numel(T),1:n))./max(abs(y(:,1:n)))); % First order, direct
+RMSi1(j) = rms((yri1(:,1:n)-y(:,1:n))./max(abs(y(:,1:n)))); % First order, indirect
+RMSd2(j) = rms((yrd2-y(1:numel(T),1:n))./max(abs(y(:,1:n)))); % Second order, direct
+RMSi2(j) = rms((yri2(:,1:n)-y(:,1:n))./max(abs(y(:,1:n))));% Second order, indirect
 end
 
 %% Plots
-
 figure
-boxplot([RMS_direct RMS_indirect],'Labels',{'Direct Reconstruction' 'Indirect Reconstruction'})
-ylabel('Relative RMS error','interpreter','latex')
+plot(T,y(:,1),'LineWidth',2);
+hold on
+plot(T,yri1(:,1),'k-.','LineWidth',2)
+plot(T,yri2(:,1),'r--','LineWidth',2)
+hold off
+legend('True','First order DMD','Second order DMD');
 set(gcf, 'PaperPositionMode', 'manual');
 set(gcf, 'PaperUnits', 'inches');
 set(gcf, 'PaperSize', [6 5]);
 set(gcf, 'PaperPosition', [0 0 6 5]);
 set(gca,'FontSize',12,'TickLabelInterpreter','latex');
-filename = 'secondOrderLiouvilleLinearOscillatorRMSBox.pdf';
-%saveas(gcf,filename);
+filename = ['comparisonNoise' num2str(standardDeviation) 'LinearOscillator.pdf'];
+saveas(gcf,filename);
+
+if numTrials > 1
+    figure
+    boxplot([RMSi1 RMSi2],'Labels',{'First order DMD' 'Second order DMD'})
+    ylabel('Relative RMS error','interpreter','latex')
+    set(gcf, 'PaperPositionMode', 'manual');
+    set(gcf, 'PaperUnits', 'inches');
+    set(gcf, 'PaperSize', [6 5]);
+    set(gcf, 'PaperPosition', [0 0 6 5]);
+    set(gca,'FontSize',12,'TickLabelInterpreter','latex');
+    filename = ['comparisonNoise' num2str(standardDeviation) 'LinearOscillatorBox.pdf'];
+    saveas(gcf,filename);
+end
 
 figure
-plot(T,y(:,1:n).',T,yr_direct.',T,yr_indirect(:,1:n).','LineWidth',1.5)
-l=legend('True ($\gamma(t)$)','Direct ($\hat\gamma_D(t)$)','Indirect ($\hat\gamma_I(t)$)');
-set(l,'Interpreter','latex');
-xlabel('t [s]','Interpreter','latex');
-set(gcf, 'PaperPositionMode', 'manual');
-set(gcf, 'PaperUnits', 'inches');
-set(gcf, 'PaperSize', [6 5]);
-set(gcf, 'PaperPosition', [0 0 6 5]);
-set(gca,'FontSize',12,'TickLabelInterpreter','latex');
-filename = 'secondOrderLiouvilleLinearOscillatorReconstruction.pdf';
-%saveas(gcf,filename);
-
-figure
-XX = -1.5:0.1:1.5;
+XX = -3:0.1:3;
 FF = zeros(size(XX));
 for i = 1:numel(XX)
-    FF(i)=f(XX(i));
+    FF(i)=f2(XX(i));
 end
 plot(XX,-2*XX,XX,FF,'LineWidth',1.5);
 xlabel('$x$','interpreter','latex');
@@ -141,8 +183,8 @@ set(gcf, 'PaperUnits', 'inches');
 set(gcf, 'PaperSize', [6 5]);
 set(gcf, 'PaperPosition', [0 0 6 5]);
 set(gca,'FontSize',12,'TickLabelInterpreter','latex');
-filename = 'secondOrderLiouvilleLinearOscillatorVectorField.pdf';
-%saveas(gcf,filename);
+filename = ['secondOrderLiouvilleLinearOscillatorNoise' num2str(standardDeviation) 'VectorField.pdf'];
+saveas(gcf,filename);
 
 % plot(RMS_direct,'*')
 % set(gcf, 'PaperPositionMode', 'manual');
