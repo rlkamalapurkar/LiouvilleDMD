@@ -63,9 +63,9 @@ K2 = KernelRKHS('Gaussian',mu2);
 Regularization2=1e-8; % Exponential: 0.0001;
 
 % First order
-mu1 = 100;
-K1 = KernelRKHS('Gaussian',mu2);
-Regularization1=1e-6; % Exponential: 0.0001;
+mu1 = 1000;
+K1 = KernelRKHS('Gaussian',mu1);
+Regularization1=1e-7; % Exponential: 0.0001;
 
 %% DMD Monte Carlo trials
 for j=1:numTrials

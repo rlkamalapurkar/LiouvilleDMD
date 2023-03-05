@@ -80,7 +80,7 @@ Regularization2 = 7e-6;
 K2 = KernelRKHS('Exponential',mu2);
 
 % Exponential, first order
-mu1 = 200; 
+mu1 = 190; 
 K1 = KernelRKHS('Exponential',mu1);
 Regularization1=1e-8;
 

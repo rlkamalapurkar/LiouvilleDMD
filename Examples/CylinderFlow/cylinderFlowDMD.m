@@ -5,6 +5,7 @@
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
 clear all
+close all
 DATAPATH = '../../../DATA';
 addpath('../../lib');
 

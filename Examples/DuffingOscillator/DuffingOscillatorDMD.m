@@ -56,7 +56,7 @@ end
 % (R2020b or newer version of MATLAB needed)
 
 % Exponential, first order
-mu1 = 200; 
+mu1 = 190; 
 K1 = KernelRKHS('Exponential',mu1);
 Regularization1=1e-8;
 
