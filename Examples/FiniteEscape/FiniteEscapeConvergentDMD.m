@@ -6,7 +6,6 @@
 %
 close all
 clear all
-
 addpath('../../lib');
 
 %% Generate data for DMD
@@ -43,11 +42,13 @@ T = 0:0.01:0.7;
 x = -0.5;
 % Actual trajectory
 [~,y]=ode45(@(t,x) xDot(t,x),T,x);
-yr = zeros(size(y(:,1)));
+
+% Direct reconstruction using eigenvalues
+ydr = zeros(size(y(:,1)));
 for i=1:numel(T)
-    yr(i,:) = real(ReconstructionFunction(T(i),x));
+    ydr(i,:) = real(ReconstructionFunction(T(i),x));
 end
-plot(T,y(:,1),T,yr,'LineWidth',2);
+plot(T,y(:,1),T,ydr,'LineWidth',2);
 legend('$x(t)$','$\sum_{m=1}^{10} \hat \xi_{m} e^{\lambda_m t} \hat \varphi_m(x(0))$','interpreter','latex','location','northwest');    
 xlabel('Time (s)','interpreter','latex')
 set(gcf, 'PaperPositionMode', 'manual');
@@ -57,7 +58,23 @@ set(gcf, 'PaperPosition', [0 0 9 3]);
 set(gca,'FontSize',16);
 xlim([T(1) T(end)]);
 ylim([-0.5 0.5]);
-filename = ['finite-escape-' K.type '-liouville-conv-reg-' num2str(GramMatrixRegularizationParameter) '-reconstruction.pdf'];
+filename = ['finite-escape-' K.type '-liouville-conv-reg-' num2str(GramMatrixRegularizationParameter) '-direct-reconstruction.pdf'];
+%saveas(gcf,filename);
+
+% Indirect reconstruction using vector field
+[~,yir]=ode45(@(t,x) VectorField(x),T,x);
+figure
+plot(T,y(:,1),T,yir,'LineWidth',2);
+legend('$x(t)$','$\hat{x}(t)$','interpreter','latex','location','northwest');    
+xlabel('Time (s)','interpreter','latex')
+set(gcf, 'PaperPositionMode', 'manual');
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperSize', [9 3]);
+set(gcf, 'PaperPosition', [0 0 9 3]);
+set(gca,'FontSize',16);
+xlim([T(1) T(end)]);
+ylim([-0.5 0.5]);
+filename = ['finite-escape-' K.type '-liouville-conv-reg-' num2str(GramMatrixRegularizationParameter) '-indirect-reconstruction.pdf'];
 %saveas(gcf,filename);
 %% Vector field
 xrange = 2;
@@ -79,6 +96,7 @@ set(gcf, 'PaperPosition', [0 0 9 3]);
 set(gca,'FontSize',16);
 filename = ['finite-escape-' K.type '-liouville-conv-reg-' num2str(GramMatrixRegularizationParameter) '-vectorfield.pdf'];
 %saveas(gcf,filename);
+
 %% functions
 function out = oddLength(dt,tf)
     out = 0:dt:tf;
