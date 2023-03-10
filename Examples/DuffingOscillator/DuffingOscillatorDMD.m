@@ -61,8 +61,8 @@ K1 = KernelRKHS('Exponential',mu1);
 Regularization1=1e-8;
 
 %% Liouville DMD
-
-[~,~,~,r1,f1] = LiouvilleDMD(K1,State,SampleTime,1,Regularization1);
+ScalingFactor = 0.5;
+[~,~,~,r1,f1] = LiouvilleDMD(K1,State,SampleTime,ScalingFactor,Regularization1);
 
 %% Reconstruction
 T = 0:0.1:20;

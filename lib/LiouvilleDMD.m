@@ -105,5 +105,5 @@ ef = @(x) C.'*squeeze(pagemtimes(K.K(x,W),S));
 % Reconstruction function:
 r = @(t,x0) real(Z*((C.'*squeeze(pagemtimes(K.K(x0,W),S))).*exp(L*t))); 
 % Vector field:
-f = @(x) real(Z*((C.'*squeeze(pagemtimes(K.K(x,W),S))).*L));
+f = @(x) real((1/a)*Z*((C.'*squeeze(pagemtimes(K.K(x,W),S))).*L));
 end
