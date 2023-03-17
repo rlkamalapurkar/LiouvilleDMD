@@ -2,8 +2,6 @@
 % Rosenfeld et al. 2022, see
 % https://link.springer.com/article/10.1007/s00332-021-09746-w
 %
-% Code written by Rushikesh Kamalapurkar
-%
 % This function performs dynamic mode decomposition of a dynamical system
 % from sampled trajectories of the system. 
 %
