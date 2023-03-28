@@ -36,8 +36,6 @@ classdef KernelRKHS
     properties
         parameter; % kernel width
         type; % kernel type
-        K; % kernel function
-        G2K; % A function that calculates the product of a given vector and the gradient of K with respect to the second argument.
     end
     methods
         function obj = KernelRKHS(type,parameter)
@@ -52,16 +50,30 @@ classdef KernelRKHS
             else
                 error('Two (or zero) input arguments needed');
             end
-            % Kernel functions
+        end
+
+        function y = K(obj,X,Y)
+            % Kernel function
             if isequal(obj.type,'Gaussian')
-                obj.K = @(X,Y) exp(-1/obj.parameter*(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none')));
-                obj.G2K = @(X,Y,Z) (2/obj.parameter)*(pagemtimes(X,'transpose',Z,'none') - pagemtimes(Z,'transpose',Y,'none')).*obj.K(X,Y);
+                y = exp(-1/obj.parameter*(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none')));
             elseif isequal(obj.type,'Exponential')
-                obj.K = @(X,Y) exp(1/obj.parameter*pagemtimes(X,'transpose',Y,'none'));
-                obj.G2K = @(X,Y,Z) 1/obj.parameter*pagemtimes(X,'transpose',Z,'none').*obj.K(X,Y);
+                y = exp(1/obj.parameter*pagemtimes(X,'transpose',Y,'none'));
             elseif isequal(obj.type,'Linear')
-                obj.K = @(X,Y) 1/obj.parameter*pagemtimes(X,'transpose',Y,'none');
-                obj.G2K = @(X,Y,Z) 1/obj.parameter*pagemtimes(X,'transpose',Z,'none')*ones(1,size(Y,2));
+                y = 1/obj.parameter*pagemtimes(X,'transpose',Y,'none');
+            else
+                error(['Kernel type' obj.type 'not implemented']);
+            end
+        end
+
+        function y = G2K(obj,X,Y,Z)
+            % A function that calculates the product of a given vector and
+            % the gradient of K with respect to the second argument.
+            if isequal(obj.type,'Gaussian')
+                y = (2/obj.parameter)*(pagemtimes(X,'transpose',Z,'none') - pagemtimes(Z,'transpose',Y,'none')).*obj.K(X,Y);
+            elseif isequal(obj.type,'Exponential')
+                y = 1/obj.parameter*pagemtimes(X,'transpose',Z,'none').*obj.K(X,Y);
+            elseif isequal(obj.type,'Linear')
+                y = 1/obj.parameter*pagemtimes(X,'transpose',Z,'none')*ones(1,size(Y,2));
             else
                 error(['Kernel type' obj.type 'not implemented']);
             end

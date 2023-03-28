@@ -5,12 +5,12 @@
 % This function performs dynamic mode decomposition of a dynamical system
 % from sampled trajectories of the system. 
 %
-% [Z,L,ef,r,f] = LiouvilleDMD(K,W,T) OR
-% [Z,L,ef,r,f] = LiouvilleDMD(K,W,T,a) OR
-% [Z,L,ef,r,f] = LiouvilleDMD(K,W,T,a,l)
+% [Z,L,ef,r,f] = LiouvilleDMD(K,W,t) OR
+% [Z,L,ef,r,f] = LiouvilleDMD(K,W,t,a) OR
+% [Z,L,ef,r,f] = LiouvilleDMD(K,W,t,a,l)
 %
 % Inputs:
-%    1) K: Object of the class 'Kernel', where K.K is the kernel function
+%    1) K: A kernel object, where K.K is the kernel function
 %          Example 1, Gaussian:
 %             K.K = @(X,Y) exp(-1/mu*(pagetranspose(sum(X.^2,1)) + ...
 %             sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none'))); 

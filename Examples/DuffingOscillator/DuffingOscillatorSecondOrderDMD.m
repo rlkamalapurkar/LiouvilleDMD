@@ -49,7 +49,7 @@ SampleTime = cell2mat(cellfun(@(x) [x;NaN(maxLength-length(x),1)],...
 
 %% MCMC parameters
 % Noise standard deviation
-standardDeviation = 0.01; 
+standardDeviation = 0.0; 
 if standardDeviation == 0
     numTrials = 1;
 else
