@@ -25,8 +25,8 @@
 %       l: (optional argument, default = 0) Regularization coefficient
 %          (needed if the Gram matrix is rank deficient)
 % Outputs:
-%       Z: Koopman modes
-%       L: Koopman eigenvalues
+%       Z:  Koopman modes
+%       L:  Koopman eigenvalues
 %       ef: Koopman eigenfunctions
 %       cr: Continuous Koopman reconstruction function, cr(t,x0)
 %           reconstructs the system state at time t starting from x0
@@ -35,7 +35,8 @@
 %           vector field $ f_{d} $ of the estimated discrete time system as
 %           $ x_{k+1} = fd(x_{k}) = dr(1,x_{k}) $
 %       fc: The vector field of the estimated continuous time system 
-%           $ \dot{x} = fc(x) $
+%           $ \dot{x} = fc(x) $. This is relevant only if the data were
+%           sampled from a continuous time system.
 %
 % © Rushikesh Kamalapurkar
 %

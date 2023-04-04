@@ -32,7 +32,7 @@ g = @(x) ...
 IV_selection = 'halton'; 
 samp_min = -1;
 samp_max = 1;
-M = 50;
+M = 100;
 if strcmp(IV_selection,'random')
     % Get TotalTrajectories random IV's.
     IV = samp_min + (samp_max - samp_min)*rand(n, M);
@@ -64,7 +64,7 @@ SampleTime = cell2mat(cellfun(@(x) [x;NaN(maxLength-length(x),1)],...
     arrayfun(@(x) (oddLength(ts,x)).',T,'UniformOutput',false), 'UniformOutput', false));
 
 %% Kernels
-kT = 10000;
+kT = 40000;
 e = 1e-6;
 
 K=KernelvvRKHS('Gaussian',kT*ones(m+1,1));

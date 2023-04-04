@@ -7,8 +7,8 @@
 % dynamical system from sampled state and control trajectories of the 
 % system. 
 %
-% [Z,L,ef,r,f] = LiouvilleDMD(KT,K,X,U,t,mu) OR
-% [Z,L,ef,r,f] = LiouvilleDMD(KT,K,X,U,t,mu,l)
+% [Z,L,ef,r,f] = controlLiouvilleDMD(KT,K,X,U,t,mu) OR
+% [Z,L,ef,r,f] = controlLiouvilleDMD(KT,K,X,U,t,mu,l)
 %
 % Inputs:
 %    1) KT: svRKHS kernel 
@@ -91,7 +91,7 @@ C = V./diag(sqrt(V'*GT*V)).'; % Normalized eigenvectors of finite rank represent
 % Reconstruction
 ef = @(x) C.'*squeeze(pagemtimes(KT.K(x,X),S)); % Eigenfunctions evaluated at x
 IntMat = reshape(pagemtimes(X,S),n,M); % Integrals of trajectories
-Z = IntMat/(C.'*G); % Control Liouville modes
+Z = IntMat/(C.'*GT); % Control Liouville modes
 r = @(t,x) real(Z*(ef(x).*exp(L*t))); % Reconstruction function
 f = @(x) real(Z*(L.*ef(x))); % vectorfield
 end
