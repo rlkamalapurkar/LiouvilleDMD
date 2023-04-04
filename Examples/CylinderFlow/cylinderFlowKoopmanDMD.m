@@ -4,8 +4,8 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-clear all
-close all
+function cylinderFlowKoopmanDMD()
+	
 DATAPATH = '../../../DATA';
 addpath('../../lib')
 
@@ -118,4 +118,5 @@ if PrintRecon
         set(gca,'XTickLabel',[]);
         saveas(gcf,filename);
     end
+end
 end

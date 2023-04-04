@@ -4,7 +4,8 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-clear all
+function cylinderFlowConvergentDMD()
+	
 DATAPATH = '../../../DATA';
 addpath('../../lib');
 
@@ -254,4 +255,5 @@ if PlotModes
     end   
 figHandles = findobj('Type', 'figure');
 f_figureplace(figHandles,4,5,2);
+end
 end

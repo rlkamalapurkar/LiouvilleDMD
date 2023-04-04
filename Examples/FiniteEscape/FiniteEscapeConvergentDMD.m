@@ -4,8 +4,8 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-close all
-clear all
+function FiniteEscapeConvergentDMD()
+	
 addpath('../../lib');
 
 %% Generate data for DMD
@@ -96,6 +96,7 @@ set(gcf, 'PaperPosition', [0 0 9 3]);
 set(gca,'FontSize',16);
 filename = ['finite-escape-' K.type '-liouville-conv-reg-' num2str(GramMatrixRegularizationParameter) '-vectorfield.pdf'];
 %saveas(gcf,filename);
+end
 
 %% functions
 function out = oddLength(dt,tf)

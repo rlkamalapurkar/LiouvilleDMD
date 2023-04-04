@@ -3,8 +3,8 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-close all
-clear all
+function DuffingOscillatorDMD()
+	
 addpath('../../lib')
 %% Generate and format data for DMD
 
@@ -85,6 +85,7 @@ plot(TDirect,y(1:numel(TDirect),:),TDirect,yr1);legend('True x1','True x2','Reco
 
 figure
 plot(T,y,T,yri1);legend('True x1','True x2','Reconstructed x1','Reconstructed x2');title('Indirect Reconstruction');
+end
 
 %% auxiliary functions
 function out = oddLength(dt,tf)

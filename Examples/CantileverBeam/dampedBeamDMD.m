@@ -4,9 +4,8 @@
 %
 % © Rushikesh Kamalapurkar, Ben Russo, and Joel Rosenfeld
 %
-[resT,msh,longestPeriod] = cantileverBeamUndampedTransient(10,0.3);
-clearvars -except resT msh longestPeriod
-close all
+function dampedBeamDMD()
+	
 addpath('../../lib');
 
 %% Parameters
@@ -21,7 +20,7 @@ Regularization = 1e-10; % 3e-12 for exponential
 
 %% Generate and format data for DMD
 % Generate data
-%[resT,msh,longestPeriod] = cantileverBeamUndampedTransient(10,0.3);
+[resT,msh,longestPeriod] = cantileverBeamUndampedTransient(10,0.3);
 h = longestPeriod/100;
 skip = 1;
 % Segment single trajectory into multiple trajectories
@@ -101,4 +100,5 @@ if ShowVideo || SaveVideo
     if SaveVideo
         close(v);
     end
+end
 end

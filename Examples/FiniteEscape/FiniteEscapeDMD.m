@@ -3,8 +3,7 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-close all
-clear all
+function FiniteEscapeDMD()
 
 addpath('../../lib');
 
@@ -54,8 +53,9 @@ set(gcf, 'PaperSize', [9 3]);
 set(gcf, 'PaperPosition', [0 0 9 3]);
 set(gca,'FontSize',16);
 filename = ['finite-escape-' K.type '-liouville-reg-' num2str(GramMatrixRegularizationParameter) '-reconstruction.pdf'];
-saveas(gcf,filename);
+%saveas(gcf,filename);
 %% Vector field
+
 xrange = 2;
 pointsPerDim = 100;%10;
 x = linspace(-xrange,xrange,pointsPerDim).';
@@ -74,7 +74,9 @@ set(gcf, 'PaperSize', [9 3]);
 set(gcf, 'PaperPosition', [0 0 9 3]);
 set(gca,'FontSize',16);
 filename = ['finite-escape-' K.type '-liouville-reg-' num2str(GramMatrixRegularizationParameter) '-vectorfield.pdf'];
-saveas(gcf,filename);
+%saveas(gcf,filename);
+end
+
 %% functions
 function out = oddLength(dt,tf)
     out = 0:dt:tf;

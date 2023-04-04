@@ -3,8 +3,8 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-clear all
-close all
+function DuffingOscillatorKoopmanDMD()
+
 addpath('../../lib')
 
 %% Duffing oscillator trajectory generator
@@ -70,3 +70,4 @@ end
 figure
 plot(Tdv,y,Tdv,ydv,'LineWidth',2);
 legend('True $x_1$','True $x_2$','$\hat{x}_1$ discrete vectorfield','$\hat{x}_2$ discrete vectorfield','interpreter','latex')
+end

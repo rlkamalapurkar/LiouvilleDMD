@@ -6,7 +6,6 @@
 %
 function twoLinkRobot()
 
-close all
 addpath('../../lib')
 %% Generate Trajectories
 n = 4; % Number of dimensions that f maps from/to

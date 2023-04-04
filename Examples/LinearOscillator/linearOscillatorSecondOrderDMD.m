@@ -4,8 +4,8 @@
 %
 % © Rushikesh Kamalapurkar, Ben Russo, and Joel Rosenfeld
 %
-clear all
-close all
+function linearOscillatorSecondOrderDMD()
+	
 addpath('../../lib')
 
 %% Generate trajectories of a linear oscillator
@@ -151,7 +151,7 @@ set(gcf, 'PaperSize', [6 5]);
 set(gcf, 'PaperPosition', [0 0 6 5]);
 set(gca,'FontSize',12,'TickLabelInterpreter','latex');
 filename = ['comparisonNoise' num2str(standardDeviation) 'LinearOscillator.pdf'];
-saveas(gcf,filename);
+%saveas(gcf,filename);
 
 if numTrials > 1
     figure
@@ -163,7 +163,7 @@ if numTrials > 1
     set(gcf, 'PaperPosition', [0 0 6 5]);
     set(gca,'FontSize',12,'TickLabelInterpreter','latex');
     filename = ['comparisonNoise' num2str(standardDeviation) 'LinearOscillatorBox.pdf'];
-    saveas(gcf,filename);
+    %saveas(gcf,filename);
 end
 
 figure
@@ -182,4 +182,5 @@ set(gcf, 'PaperSize', [6 5]);
 set(gcf, 'PaperPosition', [0 0 6 5]);
 set(gca,'FontSize',12,'TickLabelInterpreter','latex');
 filename = ['secondOrderLiouvilleLinearOscillatorNoise' num2str(standardDeviation) 'VectorField.pdf'];
-saveas(gcf,filename);
+%saveas(gcf,filename);
+end

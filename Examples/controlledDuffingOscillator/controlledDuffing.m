@@ -5,7 +5,6 @@
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 function controlledDuffing()
 
-close all;
 addpath('../../lib');
 
 %% Generate Trajectories

@@ -4,8 +4,8 @@
 %
 % © Rushikesh Kamalapurkar, Ben Russo, and Joel Rosenfeld
 %
-close all
-clear all
+function DuffingOscillatorSecondOrderDMD()
+	
 addpath('../../lib')
 %% Dataset parameters
 
@@ -210,6 +210,7 @@ set(gcf, 'PaperPosition', [0 0 6 5]);
 set(gca,'FontSize',12,'TickLabelInterpreter','latex');
 filename = ['secondOrderLiouvilleDuffingNoise' num2str(standardDeviation) 'VectorField.pdf'];
 saveas(gcf,filename);
+end
 
 %% auxiliary functions
 function out = oddLength(dt,tf)

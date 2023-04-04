@@ -80,4 +80,3 @@ classdef KernelRKHS
         end
     end
 end
-                

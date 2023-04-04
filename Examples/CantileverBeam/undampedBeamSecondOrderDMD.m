@@ -4,8 +4,8 @@
 %
 % © Rushikesh Kamalapurkar, Ben Russo, and Joel Rosenfeld
 %
-clear all
-close all
+function undampedBeamSecondOrderDMD()
+
 addpath('../../lib');
 
 %% Parameters
@@ -299,4 +299,5 @@ if directReconstruction
         filename = 'secondOrderLiouvilleBeamDirectReconstructionError';
         saveas(fig1,filename,'pdf');
     end
+end
 end

@@ -3,8 +3,8 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-close all
-clear all
+function DuffingOscillatorConvergentDMD()
+
 addpath('../../lib')
 %% Generate and format data for DMD
 
@@ -94,7 +94,7 @@ legend('True $x_1$','True $x_2$','Reconstructed $x_1$','Reconstructed $x_2$','In
 xlabel('Time [s]','Interpreter','latex')
 % f_saveplot('DuffingConvergentReconstruction','linewidth',1.2,'fontsize',14)
 temp=[T.' y yric];
-save('DuffingConvergentReconstruction.dat','temp','-ascii');
+%save('DuffingConvergentReconstruction.dat','temp','-ascii');
 
 % Indirect reconstruction
 [~,yri1]=ode45(@(t,x) f1(x),T,x);
@@ -111,7 +111,7 @@ ylabel('Norm of Reconstruction Error','Interpreter','latex');
 xlabel('Time [s]','Interpreter','latex')
 % f_saveplot('DuffingConvergentErrorComparison','linewidth',1.5,'fontsize',14)
 temp=[T.' vecnorm(y.'-yric.').',vecnorm(y.'-yri1.').',vecnorm(y.'-yri2.').'];
-save('DuffingConvergentErrorComparison.dat','temp','-ascii');
+%save('DuffingConvergentErrorComparison.dat','temp','-ascii');
 
 %% Vector field
 GridSize = 25;
@@ -139,27 +139,9 @@ xlabel('$x_1$','interpreter','latex','fontsize',14)
 ylabel('$x_2$','interpreter','latex','fontsize',14)
 zlabel('Relative Error Norm','interpreter','latex','fontsize',14)
 % f_saveplot('DuffingConvergentVectorField','fontsize',14)
-save('DuffingConvergentVectorField.dat','temp','-ascii');
-% figure
-% surf(XX,YY,reshape(vecnorm(x_dot_at_x0 - x_dot_hat_at_x0_1),GridSize,GridSize))
-% xlabel('$x_1$','interpreter','latex','fontsize',16)
-% ylabel('$x_2$','interpreter','latex','fontsize',16)
-% zlabel('Error Norm','interpreter','latex','fontsize',16)
-% figure
-% surf(XX,YY,reshape(vecnorm(x_dot_at_x0 - x_dot_hat_at_x0_2),GridSize,GridSize))
-% xlabel('$x_1$','interpreter','latex','fontsize',16)
-% ylabel('$x_2$','interpreter','latex','fontsize',16)
-% zlabel('Error Norm','interpreter','latex','fontsize',16)
-% figure
-% surf(XX,YY,reshape(vecnorm(x_dot_at_x0 - x_dot_hat_at_x0_c),GridSize,GridSize) - reshape(vecnorm(x_dot_at_x0 - x_dot_hat_at_x0_1),GridSize,GridSize))
-% xlabel('$x_1$','interpreter','latex','fontsize',16)
-% ylabel('$x_2$','interpreter','latex','fontsize',16)
-% zlabel('Error Norm','interpreter','latex','fontsize',16)
-% figure
-% surf(XX,YY,reshape(vecnorm(x_dot_at_x0 - x_dot_hat_at_x0_c),GridSize,GridSize) - reshape(vecnorm(x_dot_at_x0 - x_dot_hat_at_x0_2),GridSize,GridSize))
-% xlabel('$x_1$','interpreter','latex','fontsize',16)
-% ylabel('$x_2$','interpreter','latex','fontsize',16)
-% zlabel('Error Norm','interpreter','latex','fontsize',16)
+% save('DuffingConvergentVectorField.dat','temp','-ascii');
+
+end
 
 %% auxiliary functions
 function out = oddLength(dt,tf)

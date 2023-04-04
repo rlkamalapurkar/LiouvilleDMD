@@ -3,8 +3,7 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-close all
-clear all
+function FiniteEscapeKoopmanDMD()
 
 addpath('../../lib');
 
@@ -66,3 +65,4 @@ end
 figure
 plot(Tdv,y,Tdv,ydv,'LineWidth',2);
 legend('True $x$','$\hat{x}$ discrete vectorfield','interpreter','latex') 
+end
