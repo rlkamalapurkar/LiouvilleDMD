@@ -7,8 +7,8 @@
 % dynamical system from sampled state and control trajectories of the 
 % system. 
 %
-% [Z,L,ef,r,f] = controlLiouvilleDMD(KT,K,X,U,t,mu) OR
-% [Z,L,ef,r,f] = controlLiouvilleDMD(KT,K,X,U,t,mu,l)
+% [Z,L,ef,r,f] = ControlLiouvilleDMD(KT,K,X,U,t,mu) OR
+% [Z,L,ef,r,f] = ControlLiouvilleDMD(KT,K,X,U,t,mu,l)
 %
 % Inputs:
 %    1) KT: svRKHS kernel 
@@ -34,7 +34,7 @@
 %    4) r:  Reconstruction function
 %    5) f:  Vector field
 %
-function [Z,L,ef,r,f] = controlLiouvilleDMD(KT,K,X,U,t,mu,varargin)
+function [Z,L,ef,r,f] = ControlLiouvilleDMD(KT,K,X,U,t,mu,varargin)
 
 % Processing optional arguments and setting defaults
 if nargin == 6

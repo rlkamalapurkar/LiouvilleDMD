@@ -63,7 +63,7 @@ KT=KernelRKHS('Gaussian',kT);
 mu = @(x) -2*x(1,:,:) - 1*x(2,:,:);
 
 %% CLDMD
-[~,~,~,~,fHat] = controlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
+[~,~,~,~,fHat] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
 
 %% Indirect reconstruction
 x0 = [2;-2];

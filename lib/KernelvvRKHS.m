@@ -57,9 +57,9 @@ classdef KernelvvRKHS
             if isequal(obj.type,'Gaussian')
                 y = exp(pagemtimes(reshape(-1./obj.parameter,1,1,1,numel(obj.parameter)),repmat(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none'),1,1,1,numel(obj.parameter))));
             elseif isequal(obj.type,'Exponential')
-                y = exp(pagemtimes(reshape(-1./obj.parameter,1,1,1,numel(obj.parameter)),repmat(pagemtimes(X,'transpose',Y,'none'),1,1,1,numel(obj.parameter))));
+                y = exp(pagemtimes(reshape(1./obj.parameter,1,1,1,numel(obj.parameter)),repmat(pagemtimes(X,'transpose',Y,'none'),1,1,1,numel(obj.parameter))));
             elseif isequal(obj.type,'Linear')
-                y = pagemtimes(reshape(-1./obj.parameter,1,1,1,numel(obj.parameter)),repmat(pagemtimes(X,'transpose',Y,'none'),1,1,1,numel(obj.parameter)));
+                y = pagemtimes(reshape(1./obj.parameter,1,1,1,numel(obj.parameter)),repmat(pagemtimes(X,'transpose',Y,'none'),1,1,1,numel(obj.parameter)));
             else
                 error(['Kernel type' obj.type 'not implemented']);
             end
