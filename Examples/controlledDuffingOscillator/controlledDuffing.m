@@ -51,26 +51,28 @@ for i = 1:M
 end
 SampleTime = cell2mat(cellfun(@(x) [x;NaN(maxLength-length(x),1)],...
     arrayfun(@(x) (oddLength(ts,x)).',T,'UniformOutput',false), 'UniformOutput', false));
-
 %% Kernels
-kT = 15;
-e = 0.000001;
+kT = 10;
+e = 1e-8;
 
-K=KernelvvRKHS('Gaussian',kT*ones(m+1,1));
-KT=KernelRKHS('Gaussian',kT);
+K=KernelvvRKHS('Exponential',kT*ones(m+1,1));
+KT=KernelRKHS('Exponential',kT);
 
 %% Feedback controller
 mu = @(x) -2*x(1,:,:) - 1*x(2,:,:);
 
 %% CLDMD
-[~,~,~,~,fHat] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
+[~,~,~,r,fHat] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
 
 %% Indirect reconstruction
 x0 = [2;-2];
 t_pred = 0:0.1:15;
 [~,y_pred] = ode45(@(t,x) fHat(x),t_pred,x0);
 [~,y] = ode45(@(t,x) f(x) + g(x) * mu(x),t_pred,x0);
-
+y_pred_dir = zeros(size(y));
+for i=1:numel(t_pred)
+    y_pred_dir(i,:) = r(t_pred(i),x0).';
+end
 % Plots
 plot(t_pred,y,'linewidth',2)
 hold on
@@ -82,52 +84,78 @@ set(gca,'fontsize',16)
 legend('$x_1(t)$','$x_2(t)$','$\hat{x}_1(t)$','$\hat{x}_2(t)$',...
 'interpreter','latex','fontsize',16,'location','southeast')
 
-figure
-plot(t_pred,y-y_pred,'linewidth',2)
-xlabel('Time (s)')
-set(gca,'fontsize',16)
-legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
-'interpreter','latex','fontsize',16,'location','east')
+% figure
+% plot(t_pred,y-y_pred,'linewidth',2)
+% xlabel('Time (s)')
+% set(gca,'fontsize',16)
+% legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
+% 'interpreter','latex','fontsize',16,'location','east')
 
+% Data storage
+% temp=[t_pred.' y y_pred];
+% save('DuffingCLDMDReconstruction.dat','temp','-ascii');
+% temp=[t_pred.' y-y_pred];
+% save('DuffingCLDMDError.dat','temp','-ascii');
+
+% temp=[t_pred.' y y_pred_dir];
+% save('DuffingCLDMDReconstructionDirect.dat','temp','-ascii');
+% temp=[t_pred.' (y-y_pred_dir)];
+% save('DuffingCLDMDErrorDirect.dat','temp','-ascii');
 %% Vector field
-XDimeval = linspace(-2,2,9);
-[XX,YY] = meshgrid(XDimeval,XDimeval);
-IVeval = [XX(:) YY(:)].';
-x_dot_hat_at_x0 = [];
-x_dot_at_x0 = [];
-for i=1:size(IVeval,2)
-    x0=IVeval(:,i);
-    x_dot_hat_at_x0 = [x_dot_hat_at_x0 fHat(x0)];
-    x_dot_at_x0 = [x_dot_at_x0, f(x0)+g(x0)*mu(x0)];
-end
-max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0)))
-surf(XX,YY,reshape(x_dot_hat_at_x0(2,:),9,9))
-xlabel('$x_1$','interpreter','latex','fontsize',16)
-ylabel('$x_2$','interpreter','latex','fontsize',16)
-zlabel('$\left(\hat{f}(x) + \hat{g}(x)\mu(x)\right)_2$','interpreter','latex','fontsize',16)
-%f_saveplot('DuffingCLDMD_dim_hat_2')
-set(gca,'fontsize',16)
-figure
-surf(XX,YY,reshape(x_dot_at_x0(2,:),9,9))
-xlabel('$x_1$','interpreter','latex','fontsize',16)
-ylabel('$x_2$','interpreter','latex','fontsize',16)
-zlabel('$\left(f(x) + g(x)\mu(x)\right)_2$','interpreter','latex','fontsize',16)
-%f_saveplot('DuffingCLDMD_dim_2')
-set(gca,'fontsize',16)
-figure
-surf(XX,YY,reshape(x_dot_hat_at_x0(1,:),9,9))
-xlabel('$x_1$','interpreter','latex','fontsize',16)
-ylabel('$x_2$','interpreter','latex','fontsize',16)
-zlabel('$\left(\hat{f}(x) + \hat{g}(x)\mu(x)\right)_1$','interpreter','latex','fontsize',16)
-%f_saveplot('DuffingCLDMD_dim_hat_1')
-set(gca,'fontsize',16)
-figure
-surf(XX,YY,reshape(x_dot_at_x0(1,:),9,9))
-xlabel('$x_1$','interpreter','latex','fontsize',16)
-ylabel('$x_2$','interpreter','latex','fontsize',16)
-zlabel('$\left(f(x)+ g(x)\mu(x)\right)_1$','interpreter','latex','fontsize',16)
-%f_saveplot('DuffingCLDMD_dim_1')
-set(gca,'fontsize',16)
+% figure
+% XDimeval = linspace(-2,2,9);
+% [XX,YY] = meshgrid(XDimeval,XDimeval);
+% IVeval = [XX(:) YY(:)].';
+% x_dot_hat_at_x0 = [];
+% x_dot_at_x0 = [];
+% for i=1:size(IVeval,2)
+%     x0=IVeval(:,i);
+%     x_dot_hat_at_x0 = [x_dot_hat_at_x0 fHat(x0)];
+%     x_dot_at_x0 = [x_dot_at_x0, f(x0)+g(x0)*mu(x0)];
+% end
+% max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0)))
+% surf(XX,YY,reshape(x_dot_hat_at_x0(2,:),9,9))
+% xlabel('$x_1$','interpreter','latex','fontsize',16)
+% ylabel('$x_2$','interpreter','latex','fontsize',16)
+% zlabel('$\left(\hat{f}(x) + \hat{g}(x)\mu(x)\right)_2$','interpreter','latex','fontsize',16)
+% %f_saveplot('DuffingCLDMD_dim_hat_2')
+% set(gca,'fontsize',16)
+% figure
+% surf(XX,YY,reshape(x_dot_at_x0(2,:),9,9))
+% xlabel('$x_1$','interpreter','latex','fontsize',16)
+% ylabel('$x_2$','interpreter','latex','fontsize',16)
+% zlabel('$\left(f(x) + g(x)\mu(x)\right)_2$','interpreter','latex','fontsize',16)
+% %f_saveplot('DuffingCLDMD_dim_2')
+% set(gca,'fontsize',16)
+% figure
+% surf(XX,YY,reshape(x_dot_hat_at_x0(1,:),9,9))
+% xlabel('$x_1$','interpreter','latex','fontsize',16)
+% ylabel('$x_2$','interpreter','latex','fontsize',16)
+% zlabel('$\left(\hat{f}(x) + \hat{g}(x)\mu(x)\right)_1$','interpreter','latex','fontsize',16)
+% %f_saveplot('DuffingCLDMD_dim_hat_1')
+% set(gca,'fontsize',16)
+% figure
+% surf(XX,YY,reshape(x_dot_at_x0(1,:),9,9))
+% xlabel('$x_1$','interpreter','latex','fontsize',16)
+% ylabel('$x_2$','interpreter','latex','fontsize',16)
+% zlabel('$\left(f(x)+ g(x)\mu(x)\right)_1$','interpreter','latex','fontsize',16)
+% %f_saveplot('DuffingCLDMD_dim_1')
+% set(gca,'fontsize',16)
+% 
+% temp = [IVeval.' x_dot_hat_at_x0(2,:).'];
+% save('DuffingCLDMDVectorFieldDim2Hat.dat','temp','-ascii');
+% temp = [IVeval.' x_dot_at_x0(2,:).'];
+% save('DuffingCLDMDVectorFieldDim2.dat','temp','-ascii');
+% temp = [IVeval.' (abs(x_dot_at_x0(2,:) -  x_dot_hat_at_x0(2,:))./max(abs(x_dot_at_x0(2,:)))).'];
+% save('DuffingCLDMDVectorFieldDim2Error.dat','temp','-ascii');
+% temp = [IVeval.' x_dot_hat_at_x0(1,:).'];
+% save('DuffingCLDMDVectorFieldDim1Hat.dat','temp','-ascii');
+% temp = [IVeval.' x_dot_at_x0(1,:).'];
+% save('DuffingCLDMDVectorFieldDim1.dat','temp','-ascii');
+% temp = [IVeval.' (abs(x_dot_at_x0(1,:) -  x_dot_hat_at_x0(1,:))./max(abs(x_dot_at_x0(1,:)))).'];
+% save('DuffingCLDMDVectorFieldDim1Error.dat','temp','-ascii');
+% temp = [IVeval.' vecnorm((x_dot_at_x0 - x_dot_hat_at_x0)./max(vecnorm(x_dot_at_x0))).'];
+% save('DuffingCLDMDVectorFieldError.dat','temp','-ascii');
 end
 
 %% auxiliary functions

@@ -4,8 +4,8 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-function twoLinkRobot()
-rng(1)
+function ConvergentTwoLinkRobot()
+rng(1) % for reproducibility
 addpath('../../lib')
 %% Generate Trajectories
 n = 4; % Number of dimensions that f maps from/to
@@ -64,61 +64,95 @@ SampleTime = cell2mat(cellfun(@(x) [x;NaN(maxLength-length(x),1)],...
     arrayfun(@(x) (oddLength(ts,x)).',T,'UniformOutput',false), 'UniformOutput', false));
 
 %% Kernels
-kT = 1e5;
-e = 1e-7;
+kr = 5;
+k = 10;
+kd = 15;
+e = 1e-3;
 
-K=KernelvvRKHS('Exponential',kT*ones(m+1,1));
-KT=KernelRKHS('Exponential',kT);
-
+K=KernelvvRKHS('Exponential',k*ones(m+1,1));
+Kr=KernelRKHS('Exponential',kr);
+Kd=KernelRKHS('Exponential',kd);
 %% Feedback controller
 mu = @(x) cat(1, -5*x(1,:,:) - 5*x(2,:,:), -15*x(1,:,:) - 15*x(2,:,:));
 
-%% CLDMD
-[~,~,~,r,fHat] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
+%% SCLDMD
+[~,~,~,~,fHat_SVD] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,SampleTime,mu,e);
 
+% Indirect CLDMD for comparison
+k = 10;
+K=KernelvvRKHS('Exponential',k*ones(m+1,1));
+KT=KernelRKHS('Exponential',k);
+[~,~,~,~,fHat_Eig] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
+
+% Direct CLDMD for comparison
+kT = 1e5;
+e = 1e-7;
+K=KernelvvRKHS('Exponential',kT*ones(m+1,1));
+KT=KernelRKHS('Exponential',kT);
+[~,~,~,r,~] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
 %% Indirect reconstruction
 x0 = [1;-1;1;-1];
 t_pred = 0:0.05:15;
-[~,y_pred] = ode45(@(t,x) fHat(x),t_pred,x0);
+[~,y_pred_SVD] = ode45(@(t,x) fHat_SVD(x),t_pred,x0);
+[~,y_pred_Eig] = ode45(@(t,x) fHat_Eig(x),t_pred,x0);
 [~,y] = ode45(@(t,x) f(x) + g(x) * mu(x),t_pred,x0);
-y_pred_dir = zeros(size(y));
+y_pred_Eig_dir = zeros(size(y));
 for i=1:numel(t_pred)
-    y_pred_dir(i,:) = r(t_pred(i),x0).';
+    y_pred_Eig_dir(i,:) = r(t_pred(i),x0).';
 end
 
+temp=[t_pred.' y y_pred_SVD];
+save('2LinkSCLDMDReconstruction.dat','temp','-ascii');
+temp=[t_pred.' y-y_pred_SVD];
+save('2LinkSCLDMDError.dat','temp','-ascii');
+% temp=[t_pred.' (y-y_pred_SVD)/max(vecnorm(y.'-y_pred_SVD.'))];
+% save('2LinkSCLDMDNormalizedError.dat','temp','-ascii');
+
+temp=[t_pred.' y y_pred_Eig];
+save('2LinkCLDMDReconstruction.dat','temp','-ascii');
+temp=[t_pred.' y-y_pred_Eig];
+save('2LinkCLDMDError.dat','temp','-ascii');
+% temp=[t_pred.' (y-y_pred_Eig)/max(vecnorm(y.'-y_pred_Eig.'))];
+% save('2LinkCLDMDNormalizedError.dat','temp','-ascii');
+
+temp=[t_pred.' y y_pred_Eig_dir];
+save('2LinkCLDMDReconstructionDirect.dat','temp','-ascii');
+temp=[t_pred.' y-y_pred_Eig_dir];
+save('2LinkCLDMDErrorDirect.dat','temp','-ascii');
+% temp=[t_pred.' (y-y_pred_Eig_dir)/max(vecnorm(y.'-y_pred_Eig_dir.'))];
+% save('2LinkCLDMDNormalizedErrorDirect.dat','temp','-ascii');
+
 % Plots
-plot(t_pred,y,'linewidth',2)
-hold on
-set(gca,'ColorOrderIndex',1)
-plot(t_pred,y_pred,'--','linewidth',2)
-hold off
-xlabel('Time (s)')
-set(gca,'fontsize',16)
-legend('$x_1(t)$','$x_2(t)$','$\hat{x}_1(t)$','$\hat{x}_2(t)$',...
-'interpreter','latex','fontsize',16,'location','southeast')
+% plot(t_pred,y,'linewidth',2)
+% hold on
+% set(gca,'ColorOrderIndex',1)
+% plot(t_pred,y_pred,'--','linewidth',2)
+% hold off
+% xlabel('Time (s)')
+% set(gca,'fontsize',16)
+% legend('$x_1(t)$','$x_2(t)$','$\hat{x}_1(t)$','$\hat{x}_2(t)$',...
+% 'interpreter','latex','fontsize',16,'location','southeast')
 
 figure
-plot(t_pred,y-y_pred_dir,'linewidth',2)
+plot(t_pred,y-y_pred_SVD,'linewidth',2)
 xlabel('Time (s)')
 set(gca,'fontsize',16)
 legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
 'interpreter','latex','fontsize',16,'location','east')
 
-% Data Storage
-% temp=[t_pred.' y y_pred];
-% save('2LinkCLDMDReconstruction.dat','temp','-ascii');
-% temp=[t_pred.' y-y_pred];
-% save('2LinkCLDMDError.dat','temp','-ascii');
-% temp=[t_pred.' (y-y_pred)/max(vecnorm(y.'-y_pred.'))];
-% save('2LinkCLDMDNormalizedError.dat','temp','-ascii');
+figure
+plot(t_pred,y-y_pred_Eig,'linewidth',2)
+xlabel('Time (s)')
+set(gca,'fontsize',16)
+legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
+'interpreter','latex','fontsize',16,'location','east')
 
-
-temp=[t_pred.' y y_pred_dir];
-save('2LinkCLDMDReconstructionDirect.dat','temp','-ascii');
-temp=[t_pred.' y-y_pred_dir];
-save('2LinkCLDMDErrorDirect.dat','temp','-ascii');
-% temp=[t_pred.' (y-y_pred_dir)/max(vecnorm(y.'-y_pred_dir.'))];
-% save('2LinkCLDMDNormalizedErrorDirect.dat','temp','-ascii');
+figure
+plot(t_pred,y-y_pred_Eig_dir,'linewidth',2)
+xlabel('Time (s)')
+set(gca,'fontsize',16)
+legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
+'interpreter','latex','fontsize',16,'location','east')
 end
 
 %% auxiliary functions
