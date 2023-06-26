@@ -1,14 +1,12 @@
 % This function performs provably convergent dynamic mode decomposition of 
-% a dynamical system from sampled trajectories. For details, see
+% a dynamical system from sampled trajectories.
 %
-% https://arxiv.org/abs/2106.02639
-%
-% [Z,S,lsf,rsf,f] = ConvergentLiouvilleEigenDMD(Kd,Kr,X,T) OR
-% [Z,S,lsf,rsf,f] = ConvergentLiouvilleEigenDMD(Kd,Kr,X,T,l)
+% [Z,S,lsf,rsf,f] = ConvergentLiouvilleDMD(Kd,Kr,X,T) OR
+% [Z,S,lsf,rsf,f] = ConvergentLiouvilleDMD(Kd,Kr,X,T,l)
 %
 % Inputs:
-%  1,2) Kd,Kr: Objects of the class 'Kernel' for the domain and the range,
-%              Kr.K is the kernel function
+%  1,2) Kd,Kr: Objects of the class 'KernelRKHS' for the domain and the
+%          range. It is assumed that Kr.K, Kd.K are the kernel functions
 %          Example 1, exponential dot product:
 %             Kr.K = @(X,Y) exp(1/mu*pagemtimes(X,'transpose',Y,'none'));
 %          Example 2, Gaussian (NOT YET IMPLEMENTED):
@@ -24,7 +22,7 @@
 % *The number of samples in each trajectory needs to be odd.*
 % *Shorter trajectories need to be padded with zeros.*
 %
-%    4) t: A matrix of sample times
+%    4) T: A matrix of sample times
 %          First dimension: Time (size = length of longest trajectory)
 %          Second dimension: Trajectory number
 %
@@ -68,6 +66,7 @@ for i=1:N
     GT(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',Kr.K(X(:,:,i),X)),w));
     D(:,i) = X(:,Lengths(i),i) - X(:,1,i);
 end
+
 % DMD
 GT = GT + l*eye(size(GT)); % Regularization
 [VT,S,V] = svd(inv(GT)); % SVD of GT
@@ -81,6 +80,6 @@ lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,Lengths(l),l)),(1:N).') ...
     - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:N).'));
 
 % Vector field:
-temp=D/GT.';
+temp=D/GT;
 f = @(x) real(temp*squeeze(pagemtimes(Kr.K(x,X),w)));
 end

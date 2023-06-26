@@ -1,8 +1,9 @@
 % The KernelRKHS class implements the following kernels:
 %
-% 'Exponential', 
-% 'Gaussian'
-% 'Linear'
+% 'Exponential with parameter mu: exp(x.'*y/mu)', 
+% 'Gaussian with parameter mu: exp(norm(x-y)^2/mu)',
+% 'Polynomial with parameters [mu,d,b]: (b + x.'*y/mu)^d', and
+% 'Linear with parameter mu = Polynomial with parameters [mu,1,0]'
 %
 % The kernels functions are written to accept column vector, matrix, 
 % or 3D array inputs. The two inputs X and Y have to be the same size in 
@@ -35,6 +36,8 @@
 classdef KernelRKHS
     properties
         parameter; % kernel width
+        degree; % kernel width
+        bias; % kernel width
         type; % kernel type
     end
     methods
@@ -50,6 +53,28 @@ classdef KernelRKHS
             else
                 error('Two (or zero) input arguments needed');
             end
+            if isequal(obj.type,'Polynomial')
+                if numel(parameter)==1
+                    obj.parameter = parameter;
+                    obj.degree = 1;
+                    obj.bias = 0;
+                    warning('Selected linear kernel with parameter mu: k(x,y) = x.''*y/mu')
+                elseif numel(parameter)==3
+                    obj.parameter = parameter(1);
+                    obj.degree = parameter(2);
+                    obj.bias = parameter(3);
+                else
+                    error('The polynomial kernel requires three parameters [mu,d,b], k(x,y) = (b + x.''*y/mu)^d')
+                end
+            else
+                obj.degree = 1;
+                obj.bias = 0;
+            end
+            if isequal(obj.type,'Linear')
+                obj.parameter = parameter;
+                obj.degree = 1;
+                obj.bias = 0;
+            end
         end
 
         function y = K(obj,X,Y)
@@ -58,8 +83,8 @@ classdef KernelRKHS
                 y = exp(-1/obj.parameter*(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none')));
             elseif isequal(obj.type,'Exponential')
                 y = exp(1/obj.parameter*pagemtimes(X,'transpose',Y,'none'));
-            elseif isequal(obj.type,'Linear')
-                y = 1/obj.parameter*pagemtimes(X,'transpose',Y,'none');
+            elseif isequal(obj.type,'Linear') || isequal(obj.type,'Polynomial')
+                y = (obj.bias + 1/obj.parameter*pagemtimes(X,'transpose',Y,'none')).^obj.degree;
             else
                 error(['Kernel type' obj.type 'not implemented']);
             end
@@ -72,8 +97,12 @@ classdef KernelRKHS
                 y = (2/obj.parameter)*(pagemtimes(X,'transpose',Z,'none') - pagemtimes(Z,'transpose',Y,'none')).*obj.K(X,Y);
             elseif isequal(obj.type,'Exponential')
                 y = 1/obj.parameter*pagemtimes(X,'transpose',Z,'none').*obj.K(X,Y);
-            elseif isequal(obj.type,'Linear')
-                y = 1/obj.parameter*pagemtimes(X,'transpose',Z,'none').*ones(size(X,2),size(Y,2),max(size(X,3),size(Y,3)));
+            elseif isequal(obj.type,'Linear') || isequal(obj.type,'Polynomial')
+                if self.degree == 1
+                    y = 1/obj.parameter*pagemtimes(X,'transpose',Z,'none').*ones(size(X,2),size(Y,2),max(size(X,3),size(Y,3)));
+                else
+                    y = obj.degree/obj.parameter*pagemtimes(X,'transpose',Z,'none').*(obj.bias + 1/obj.parameter*pagemtimes(X,'transpose',Y,'none')).^(obj.degree-1);
+                end
             else
                 error(['Kernel type' obj.type 'not implemented']);
             end

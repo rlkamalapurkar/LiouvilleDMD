@@ -57,15 +57,25 @@ end
 
 % Exponential, first order
 
-% mu = 2.4; 
-% K = KernelRKHS('Gaussian',mu);
+% mu = 2.0; 
+% Kr = KernelRKHS('Gaussian',mu);
+% mu = 2.1; 
+% Kd = KernelRKHS('Gaussian',mu);
 % Regularization = 0;
 
 mur = 309; 
 Kr = KernelRKHS('Exponential',mur);
-mud = 309; 
+mud = 308; 
 Kd = KernelRKHS('Exponential',mud);
 Regularization = 1e-8;
+
+% mu = 1;
+% degree = 3;
+% bias = 1;
+% Kr = KernelRKHS('Polynomial',[mu,degree,bias]);
+% mu = 2;
+% Kd = KernelRKHS('Polynomial',[mu,degree,bias]);
+% Regularization = 1e-6;
 
 %% Liouville DMD
 ScalingFactor = 1;
@@ -80,22 +90,22 @@ options = odeset('RelTol',1e-5);
 % Actual trajectory
 [~,y]=ode45(@(t,x) xDot(t,x),T,x);
 
-% Indirect reconstruction convergent
+% SDMD reconstruction
 [~,yric]=ode45(@(t,x) fc(x),T,x,options);
  
-figure
-plot(T,y,T,yric);
-legend('True $x_1$','True $x_2$','Reconstructed $x_1$','Reconstructed $x_2$','Interpreter','latex','Location','northwest');
-xlabel('Time [s]','Interpreter','latex')
+% figure
+% plot(T,y,T,yric);
+% legend('True $x_1$','True $x_2$','Reconstructed $x_1$','Reconstructed $x_2$','Interpreter','latex','Location','northwest');
+% xlabel('Time [s]','Interpreter','latex')
 % f_saveplot('DuffingConvergentReconstruction','linewidth',1.2,'fontsize',14)
-temp=[T.' y yric];
-%save('DuffingConvergentReconstruction.dat','temp','-ascii');
+% temp=[T.' y yric];
+% save('DuffingConvergentReconstruction.dat','temp','-ascii');
 
-% Indirect reconstruction
+% DMD reconstruction
 [~,yri1]=ode45(@(t,x) f1(x),T,x,options);
 
-figure
-plot(T,y,T,yri1);legend('True x1','True x2','Reconstructed x1','Reconstructed x2');title('Reconstruction');
+% figure
+% plot(T,y,T,yri1);legend('True x1','True x2','Reconstructed x1','Reconstructed x2');title('Reconstruction');
 
 % Reconstruction errors
 figure
@@ -104,8 +114,8 @@ legend('Convergent Liouville DMD','Liouville DMD','Interpreter','latex','Locatio
 ylabel('Norm of Reconstruction Error','Interpreter','latex');
 xlabel('Time [s]','Interpreter','latex')
 % f_saveplot('DuffingConvergentErrorComparison','linewidth',1.5,'fontsize',14)
-temp=[T.' vecnorm(y.'-yric.').',vecnorm(y.'-yri1.').'];
-%save('DuffingConvergentErrorComparison.dat','temp','-ascii');
+% temp=[T.' vecnorm(y.'-yric.').',vecnorm(y.'-yri1.').'];
+% save('DuffingConvergentErrorComparison.dat','temp','-ascii');
 
 %% Vector field
 GridSize = 25;
@@ -124,11 +134,11 @@ end
 temp = [IVeval.' vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_c)./max(vecnorm(x_dot_at_x0))).'];
 disp(['Maximum vectorfield estimation error for convergent DMD is ' num2str(max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0_c))))])
 disp(['Maximum vectorfield estimation error for DMD is ' num2str(max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0))))])
-figure
-surf(XX,YY,reshape(vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_c)./max(vecnorm(x_dot_at_x0))),GridSize,GridSize),'EdgeColor','none','FaceColor','interp')
-xlabel('$x_1$','interpreter','latex','fontsize',14)
-ylabel('$x_2$','interpreter','latex','fontsize',14)
-zlabel('Relative Error Norm','interpreter','latex','fontsize',14)
+% figure
+% surf(XX,YY,reshape(vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_c)./max(vecnorm(x_dot_at_x0))),GridSize,GridSize),'EdgeColor','none','FaceColor','interp')
+% xlabel('$x_1$','interpreter','latex','fontsize',14)
+% ylabel('$x_2$','interpreter','latex','fontsize',14)
+% zlabel('Relative Error Norm','interpreter','latex','fontsize',14)
 % f_saveplot('DuffingConvergentVectorField','fontsize',14)
 % save('DuffingConvergentVectorField.dat','temp','-ascii');
 
