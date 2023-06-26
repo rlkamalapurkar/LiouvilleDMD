@@ -61,7 +61,7 @@ Lengths = size(t,1)-sum(isnan(t));
 % Simpsons rule weights
 w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
 
-% Gram matrix and interaction matrix
+% Gram matrix and kernel difference matrix
 GT=zeros(N);
 D = zeros(n,N);
 for i=1:N
@@ -77,8 +77,8 @@ Z = D*V; % Liouville modes
 % Right singular functions evaluated at x:
 rsf = @(x) VT.'*squeeze(pagemtimes(Kr.K(x,X),w));
 % Left singular functions evaluated at x:
-lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,Lengths(l),l)),(1:M).') ...
-    - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:M).'));
+lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,Lengths(l),l)),(1:N).') ...
+    - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:N).'));
 
 % Vector field:
 temp=D/GT.';

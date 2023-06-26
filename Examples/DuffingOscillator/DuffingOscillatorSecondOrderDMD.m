@@ -175,7 +175,7 @@ set(gcf, 'PaperSize', [6 5]);
 set(gcf, 'PaperPosition', [0 0 6 5]);
 set(gca,'FontSize',12,'TickLabelInterpreter','latex');
 filename = ['comparisonNoise' num2str(standardDeviation) 'Duffing.pdf'];
-saveas(gcf,filename);
+%saveas(gcf,filename);
 
 if numTrials > 1
     figure
@@ -187,7 +187,7 @@ if numTrials > 1
     set(gcf, 'PaperPosition', [0 0 6 5]);
     set(gca,'FontSize',12,'TickLabelInterpreter','latex');
     filename = ['comparisonNoise' num2str(standardDeviation) 'DuffingBox.pdf'];
-    saveas(gcf,filename);
+    %saveas(gcf,filename);
 end
 
 figure
@@ -209,7 +209,7 @@ set(gcf, 'PaperSize', [6 5]);
 set(gcf, 'PaperPosition', [0 0 6 5]);
 set(gca,'FontSize',12,'TickLabelInterpreter','latex');
 filename = ['secondOrderLiouvilleDuffingNoise' num2str(standardDeviation) 'VectorField.pdf'];
-saveas(gcf,filename);
+%saveas(gcf,filename);
 end
 
 %% auxiliary functions

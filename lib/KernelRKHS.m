@@ -73,7 +73,7 @@ classdef KernelRKHS
             elseif isequal(obj.type,'Exponential')
                 y = 1/obj.parameter*pagemtimes(X,'transpose',Z,'none').*obj.K(X,Y);
             elseif isequal(obj.type,'Linear')
-                y = 1/obj.parameter*pagemtimes(X,'transpose',Z,'none')*ones(1,size(Y,2));
+                y = 1/obj.parameter*pagemtimes(X,'transpose',Z,'none').*ones(size(X,2),size(Y,2),max(size(X,3),size(Y,3)));
             else
                 error(['Kernel type' obj.type 'not implemented']);
             end
