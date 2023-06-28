@@ -82,7 +82,7 @@ classdef KernelRKHS
             if isequal(obj.type,'Gaussian')
                 y = exp(-1/obj.parameter*(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none')));
             elseif isequal(obj.type,'Exponential')
-                y = 1/obj.parameter*exp(pagemtimes(X,'transpose',Y,'none'));
+                y = exp(1/obj.parameter*pagemtimes(X,'transpose',Y,'none'));
             elseif isequal(obj.type,'Linear') || isequal(obj.type,'Polynomial')
                 y = (obj.bias + 1/obj.parameter*pagemtimes(X,'transpose',Y,'none')).^obj.degree;
             else
