@@ -65,7 +65,7 @@ end
 
 mur = 309; 
 Kr = KernelRKHS('Exponential',mur);
-mud = 308; 
+mud = 310; 
 Kd = KernelRKHS('Exponential',mud);
 Regularization = 1e-8;
 
@@ -79,13 +79,14 @@ Regularization = 1e-8;
 
 %% Liouville DMD
 ScalingFactor = 1;
-[~,~,~,~,fc] = ConvergentLiouvilleDMD(Kd,Kr,State,SampleTime,Regularization);
+tic
+[Z,S,lsf,rsf,fc] = ConvergentLiouvilleDMD(Kd,Kr,State,SampleTime,Regularization);
+toc
 [~,~,~,~,f1] = LiouvilleDMD(Kr,State,SampleTime,ScalingFactor,Regularization);
 
 %% Reconstruction
 T = 0:0.1:20;
 x = [3;-2];
-
 options = odeset('RelTol',1e-5);
 % Actual trajectory
 [~,y]=ode45(@(t,x) xDot(t,x),T,x);

@@ -82,7 +82,7 @@ classdef KernelRKHS
             if isequal(obj.type,'Gaussian')
                 y = exp(-1/obj.parameter*(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none')));
             elseif isequal(obj.type,'Exponential')
-                y = exp(1/obj.parameter*pagemtimes(X,'transpose',Y,'none'));
+                y = 1/obj.parameter*exp(pagemtimes(X,'transpose',Y,'none'));
             elseif isequal(obj.type,'Linear') || isequal(obj.type,'Polynomial')
                 y = (obj.bias + 1/obj.parameter*pagemtimes(X,'transpose',Y,'none')).^obj.degree;
             else
@@ -98,7 +98,7 @@ classdef KernelRKHS
             elseif isequal(obj.type,'Exponential')
                 y = 1/obj.parameter*pagemtimes(X,'transpose',Z,'none').*obj.K(X,Y);
             elseif isequal(obj.type,'Linear') || isequal(obj.type,'Polynomial')
-                if self.degree == 1
+                if obj.degree == 1
                     y = 1/obj.parameter*pagemtimes(X,'transpose',Z,'none').*ones(size(X,2),size(Y,2),max(size(X,3),size(Y,3)));
                 else
                     y = obj.degree/obj.parameter*pagemtimes(X,'transpose',Z,'none').*(obj.bias + 1/obj.parameter*pagemtimes(X,'transpose',Y,'none')).^(obj.degree-1);

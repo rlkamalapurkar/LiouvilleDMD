@@ -50,36 +50,36 @@ elseif nargin > 5
     error("Too many input arguments.")
 end
 
-N = size(X,3); % Total number of trajectories
+M = size(X,3); % Total number of trajectories
 n = size(X,1); % State Dimension
 
 % Store trajectory lengths for interaction matrix calculation
-Lengths = size(t,1)-sum(isnan(t));
+N = size(t,1)-sum(isnan(t));
 
 % Simpsons rule weights
 w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
 
 % Gram matrix and kernel difference matrix
-GT=zeros(N);
-D = zeros(n,N);
-for i=1:N
-    GT(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',Kr.K(X(:,:,i),X)),w));
-    D(:,i) = X(:,Lengths(i),i) - X(:,1,i);
+Gr=zeros(M);
+D = zeros(n,M);
+for i=1:M
+    Gr(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',Kr.K(X(:,:,i),X)),w));
+    D(:,i) = X(:,N(i),i) - X(:,1,i);
 end
 
 % DMD
-GT = GT + l*eye(size(GT)); % Regularization
-[VT,S,V] = svd(inv(GT)); % SVD of GT
+Gr = Gr + l*eye(size(Gr)); % Regularization
+[W,S,V] = svd(inv(Gr)); % SVD of Gr
 Z = D*V; % Liouville modes
 
 % Occupation kernels evaluated at x: squeeze(pagemtimes(K(x,W),S))
 % Right singular functions evaluated at x:
-rsf = @(x) VT.'*squeeze(pagemtimes(Kr.K(x,X),w));
+rsf = @(x) W.'*squeeze(pagemtimes(Kr.K(x,X),w));
 % Left singular functions evaluated at x:
-lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,Lengths(l),l)),(1:N).') ...
-    - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:N).'));
+lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,N(l),l)),(1:M).') ...
+    - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:M).'));
 
 % Vector field:
-temp=D/GT;
+temp=D/Gr;
 f = @(x) real(temp*squeeze(pagemtimes(Kr.K(x,X),w)));
 end

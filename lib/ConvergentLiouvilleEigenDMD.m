@@ -3,8 +3,8 @@
 %
 % https://arxiv.org/abs/2106.02639
 %
-% [Z,L,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,W,T) OR
-% [Z,L,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,W,T,l)
+% [Z,L,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,X,T) OR
+% [Z,L,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,X,T,l)
 %
 % Inputs:
 %  1,2) K,KT: Objects of the class 'Kernel', K.K is the kernel function
@@ -14,7 +14,7 @@
 %             K.K = @(X,Y) exp(-1/mu*(pagetranspose(sum(X.^2,1)) + ...
 %             sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none'))); 
 %
-%    3) W: A dataset of trajectories (3D array)
+%    3) X: A dataset of trajectories (3D array)
 %          First dimension: State 
 %          Second dimension: Time (size = length of longest trajectory)
 %          Third dimension: Trajectory number
@@ -41,7 +41,7 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-function [Z,L,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,W,t,varargin)
+function [Z,L,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,X,t,varargin)
 % Processing optional arguments and setting defaults
 if nargin == 4
     l = 0; % default
@@ -58,29 +58,29 @@ if mu < muT
     warning('Parameters incompatible with convergent DMD');
 end
 
-N = size(W,3); % Total number of trajectories
-n = size(W,1); % State Dimension
+M = size(X,3); % Total number of trajectories
+n = size(X,1); % State Dimension
 
 % Store trajectory lengths for interaction matrix calculation
-Lengths = size(t,1)-sum(isnan(t));
+N = size(t,1)-sum(isnan(t));
 
 % Simpsons rule weights
-S = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
+w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
 
 % Gram matrix and interaction matrix
-G1=zeros(N);
-G=zeros(N);
-GT=zeros(N);
-I=zeros(N);
-for i=1:N
-    G(:,i) = squeeze(pagemtimes(pagemtimes(S(:,1,i).',K.K(W(:,:,i),W)),S));
-    GT(:,i) = squeeze(pagemtimes(pagemtimes(S(:,1,i).',KT.K(W(:,:,i),W)),S));
+G1=zeros(M);
+G=zeros(M);
+GT=zeros(M);
+I=zeros(M);
+for i=1:M
+    G(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',K.K(X(:,:,i),X)),w));
+    GT(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',KT.K(X(:,:,i),X)),w));
     if isequal(K.type,'Exponential') && isequal(KT.type,'Exponential')
-        G1(:,i) = squeeze(pagemtimes(pagemtimes(S(:,1,i).',KT.K((muT/mu)*W(:,:,i),(muT/mu)*W)),S));
+        G1(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',KT.K((muT/mu)*X(:,:,i),(muT/mu)*X)),w));
     else
         error('Kernels other than the exponential kernel not implemented');
     end
-    I(:,i) = pagemtimes(K.K(W(:,Lengths(i),i),W) - K.K(W(:,1,i),W),S);
+    I(:,i) = pagemtimes(K.K(X(:,N(i),i),X) - K.K(X(:,1,i),X),w);
 end
 
 % DMD
@@ -89,16 +89,16 @@ G = G + l*eye(size(G)); % Regularization
 GT = GT + l*eye(size(GT)); % Regularization
 [V,D] = eig(G1\(G*(GT\(I.')))); % Eigendecomposition of finite rank representation
 C = V./diag(sqrt(V'*G*V)).'; % Normalized eigenvectors of the finite rank representation
-IntMat = reshape(pagemtimes(W,S),n,N); % Integrals of trajectories
+IntMat = reshape(pagemtimes(X,w),n,M); % Integrals of trajectories
 Z = IntMat/(C.'*G); % Liouville modes
 L = diag(D); % Eigenvalues of the finite-rank representation
 
 % Reconstruction
 % Occupation kernels evaluated at x0: squeeze(pagemtimes(K(x0,W),S))
 % Eigenfunctions evaluated at x:
-ef = @(x) C.'*squeeze(pagemtimes(K.K(x,W),S));
+ef = @(x) C.'*squeeze(pagemtimes(K.K(x,X),w));
 % Reconstruction function:
-r = @(t,x) Z*((C.'*squeeze(pagemtimes(K.K(x,W),S))).*exp(L*t)); 
+r = @(t,x) Z*((C.'*squeeze(pagemtimes(K.K(x,X),w))).*exp(L*t)); 
 % Vector field:
-f = @(x) real(Z*((C.'*squeeze(pagemtimes(K.K(x,W),S))).*L));
+f = @(x) real(Z*((C.'*squeeze(pagemtimes(K.K(x,X),w))).*L));
 end

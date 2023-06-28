@@ -5,9 +5,9 @@
 % This function performs dynamic mode decomposition of a dynamical system
 % from sampled trajectories of the system. 
 %
-% [Z,L,ef,r,f] = LiouvilleDMD(K,W,t) OR
-% [Z,L,ef,r,f] = LiouvilleDMD(K,W,t,a) OR
-% [Z,L,ef,r,f] = LiouvilleDMD(K,W,t,a,l)
+% [Z,L,ef,r,f] = LiouvilleDMD(K,X,t) OR
+% [Z,L,ef,r,f] = LiouvilleDMD(K,X,t,a) OR
+% [Z,L,ef,r,f] = LiouvilleDMD(K,X,t,a,l)
 %
 % Inputs:
 %    1) K: A kernel object, where K.K is the kernel function
@@ -17,7 +17,7 @@
 %          Example 2, exponential dot product:
 %             K.K = @(X,Y) exp(1/mu*pagemtimes(X,'transpose',Y,'none'));
 %
-%    2) W: A dataset of trajectories (3D array)
+%    2) X: A dataset of trajectories (3D array)
 %          First dimension: State 
 %          Second dimension: Time (size = length of longest trajectory)
 %          Third dimension: Trajectory number
@@ -47,7 +47,7 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-function [Z,L,ef,r,f] = LiouvilleDMD(K,W,t,varargin)
+function [Z,L,ef,r,f] = LiouvilleDMD(K,X,t,varargin)
 
 % Processing optional arguments and setting defaults
 if nargin == 3
@@ -71,37 +71,37 @@ elseif nargin > 5
     error("Too many input arguments.")
 end
     
-N = size(W,3); % Total number of trajectories
-n = size(W,1); % State Dimension
+M = size(X,3); % Total number of trajectories
+n = size(X,1); % State Dimension
 
 % Store trajectory lengths for interaction matrix calculation
-Lengths = size(t,1)-sum(isnan(t));
+N = size(t,1)-sum(isnan(t));
 
 % Simpsons rule weights
-S = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
+w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
 
 % Gram matrix and interaction matrix
-G=zeros(N);
-I=zeros(N);
-for i=1:N
-    G(:,i) = squeeze(pagemtimes(pagemtimes(S(:,1,i).',K.K(W(:,:,i),W)),S));
-    I(:,i) = pagemtimes(K.K(a*W(:,Lengths(i),i),W) - K.K(a*W(:,1,i),W),S);
+G=zeros(M);
+I=zeros(M);
+for i=1:M
+    G(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',K.K(X(:,:,i),X)),w));
+    I(:,i) = pagemtimes(K.K(a*X(:,N(i),i),X) - K.K(a*X(:,1,i),X),w);
 end
 
 % DMD
 G = G + l*eye(size(G)); % Regularization
 [V,D] = eig(G\I.'); % Eigendecomposition of finite rank representation
 C = V./diag(sqrt(V'*G*V)).'; % Normalized eigenvectors of finite rank representation
-IntMat = reshape(pagemtimes(W,S),n,N); % Integrals of trajectories
+IntMat = reshape(pagemtimes(X,w),n,M); % Integrals of trajectories
 Z = IntMat/(C.'*G); % Liouville modes
 L = diag(D); % Eigenvalues of the finite-rank representation
 
 % Reconstruction
 % Occupation kernels evaluated at x0: squeeze(pagemtimes(K(x0,W),S))
 % Eigenfunctions evaluated at x
-ef = @(x) C.'*squeeze(pagemtimes(K.K(x,W),S));
+ef = @(x) C.'*squeeze(pagemtimes(K.K(x,X),w));
 % Reconstruction function:
-r = @(t,x0) real(Z*((C.'*squeeze(pagemtimes(K.K(x0,W),S))).*exp(L*t))); 
+r = @(t,x0) real(Z*((C.'*squeeze(pagemtimes(K.K(x0,X),w))).*exp(L*t))); 
 % Vector field:
-f = @(x) real((1/a)*Z*((C.'*squeeze(pagemtimes(K.K(x,W),S))).*L));
+f = @(x) real((1/a)*Z*((C.'*squeeze(pagemtimes(K.K(x,X),w))).*L));
 end

@@ -48,24 +48,24 @@ end
 M = size(X,3); % Number of trajectories
 m = size(U,1); % Control dimension
 n = size(X,1); % State dimension
-N = size(X,2); % Number of samples in longest trajectory
+maxN = size(X,2); % Number of samples in longest trajectory
 
 % Values of the feedback controller
 MU = mu(X);
 
 % Concatenate control arrays with 1 in the first dimension
-U = cat(1,ones(1,N,M),U(:,(1:N),:));
-MU = cat(1,ones(1,N,M),MU(:,(1:N),:));
+U = cat(1,ones(1,maxN,M),U(:,(1:maxN),:));
+MU = cat(1,ones(1,maxN,M),MU(:,(1:maxN),:));
 
 % Make 3D control arrays into 4D arrays for Gram matrix calculations
-U = reshape(permute(U,[2,3,1]),N,1,M,m+1);
-MU = reshape(permute(MU,[2,3,1]),N,1,M,m+1);
+U = reshape(permute(U,[2,3,1]),maxN,1,M,m+1);
+MU = reshape(permute(MU,[2,3,1]),maxN,1,M,m+1);
 
 % Store trajectory lengths for interaction matrix calculation
-Lengths = size(t,1)-sum(isnan(t));
+N = size(t,1)-sum(isnan(t));
 
 % Simpsons rule weights
-S = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
+w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
 
 % Control OCC Gram matrix and interaction matrix - M x M
 G = zeros(M);
@@ -74,11 +74,11 @@ I = G;
 GT=zeros(M);
 IT=GT;
 for i=1:M
-    GT(:,i) = squeeze(pagemtimes(pagemtimes(S(:,1,i).',KT.K(X(:,:,i),X)),S));
-    IT(:,i) = pagemtimes(KT.K(X(:,Lengths(i),i),X) - KT.K(X(:,1,i),X),S);
+    GT(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',KT.K(X(:,:,i),X)),w));
+    IT(:,i) = pagemtimes(KT.K(X(:,N(i),i),X) - KT.K(X(:,1,i),X),w);
 
-    G(:,i) = squeeze(pagemtimes(pagemtimes(S(:,1,i).',sum(K.K(X(:,:,i),X).*pagemtimes(U(:,:,i,:),'none',U,'transpose'),4)),S));
-    I(:,i) = squeeze(pagemtimes(pagemtimes(S(:,1,i).',sum(K.K(X(:,:,i),X).*pagemtimes(U(:,:,i,:),'none',MU,'transpose'),4)),S));
+    G(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',sum(K.K(X(:,:,i),X).*pagemtimes(U(:,:,i,:),'none',U,'transpose'),4)),w));
+    I(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',sum(K.K(X(:,:,i),X).*pagemtimes(U(:,:,i,:),'none',MU,'transpose'),4)),w));
 end
 
 % DMD
@@ -89,8 +89,8 @@ L = diag(D); % Eigenvalues of the finite-rank representation
 C = V./diag(sqrt(V'*GT*V)).'; % Normalized eigenvectors of finite rank representation
 
 % Reconstruction
-ef = @(x) C.'*squeeze(pagemtimes(KT.K(x,X),S)); % Eigenfunctions evaluated at x
-IntMat = reshape(pagemtimes(X,S),n,M); % Integrals of trajectories
+ef = @(x) C.'*squeeze(pagemtimes(KT.K(x,X),w)); % Eigenfunctions evaluated at x
+IntMat = reshape(pagemtimes(X,w),n,M); % Integrals of trajectories
 Z = IntMat/(C.'*GT); % Control Liouville modes
 r = @(t,x) real(Z*(ef(x).*exp(L*t))); % Reconstruction function
 f = @(x) real(Z*(L.*ef(x))); % vectorfield

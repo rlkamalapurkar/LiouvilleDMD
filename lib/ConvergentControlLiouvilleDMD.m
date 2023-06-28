@@ -46,21 +46,21 @@ end
 M = size(X,3); % Number of trajectories
 m = size(U,1); % Control dimension
 n = size(X,1); % State dimension
-N = size(X,2); % Number of samples in longest trajectory
+maxN = size(X,2); % Number of samples in longest trajectory
 
 % Values of the feedback controller
 MU = mu(X);
 
 % Concatenate control arrays with 1 in the first dimension
-U = cat(1,ones(1,N,M),U(:,(1:N),:));
-MU = cat(1,ones(1,N,M),MU(:,(1:N),:));
+U = cat(1,ones(1,maxN,M),U(:,(1:maxN),:));
+MU = cat(1,ones(1,maxN,M),MU(:,(1:maxN),:));
 
 % Make 3D control arrays into 4D arrays for Gram matrix calculations
-U = reshape(permute(U,[2,3,1]),N,1,M,m+1);
-MU = reshape(permute(MU,[2,3,1]),N,1,M,m+1);
+U = reshape(permute(U,[2,3,1]),maxN,1,M,m+1);
+MU = reshape(permute(MU,[2,3,1]),maxN,1,M,m+1);
 
 % Store trajectory lengths for interaction matrix calculation
-Lengths = size(t,1)-sum(isnan(t));
+N = size(t,1)-sum(isnan(t));
 
 % Simpsons rule weights
 w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
@@ -73,7 +73,7 @@ Gr=zeros(M);
 D=zeros(n,M);
 for i=1:M
     Gr(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',Kr.K(X(:,:,i),X)),w));
-    D(:,i) = X(:,Lengths(i),i) - X(:,1,i);
+    D(:,i) = X(:,N(i),i) - X(:,1,i);
 
     Gb(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',sum(K.K(X(:,:,i),X).*pagemtimes(U(:,:,i,:),'none',U,'transpose'),4)),w));
     I(:,i) = squeeze(pagemtimes(pagemtimes(w(:,1,i).',sum(K.K(X(:,:,i),X).*pagemtimes(U(:,:,i,:),'none',MU,'transpose'),4)),w));
@@ -90,7 +90,7 @@ Z = D*V; % Liouville modes
 % Right singular functions evaluated at x:
 rsf = @(x) W.'*squeeze(pagemtimes(Kr.K(x,X),w));
 % Left singular functions evaluated at x:
-lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,Lengths(l),l)),(1:M).') ...
+lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,N(l),l)),(1:M).') ...
     - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:M).'));
 % Reconstruction
 f = @(x) real(D*FRR.'*squeeze(pagemtimes(Kr.K(x,X),w))); % vectorfield

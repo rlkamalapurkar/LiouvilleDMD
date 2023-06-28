@@ -3,9 +3,9 @@
 % 
 % https://arxiv.org/abs/2101.02646
 %
-% [Z,L,ef,r,f] = SecondOrderLiouvilleDMD(K,G2K,W,t) OR
-% [Z,L,ef,r,f] = SecondOrderLiouvilleDMD(K,G2K,W,t,WDot0) OR
-% [Z,L,ef,r,f] = SecondOrderLiouvilleDMD(K,G2K,W,t,WDot0,l)
+% [Z,L,ef,r,f] = SecondOrderLiouvilleDMD(K,G2K,X,t) OR
+% [Z,L,ef,r,f] = SecondOrderLiouvilleDMD(K,G2K,X,t,XDot0) OR
+% [Z,L,ef,r,f] = SecondOrderLiouvilleDMD(K,G2K,X,t,XDot0,l)
 %
 % Inputs:
 %    1) K: An object of the class Kernel.
@@ -25,7 +25,7 @@
 %          Example 2, linear dot product:
 %             K.K = @(X,Y) 1/mu*pagemtimes(X,'transpose',Y,'none');
 %             K.G2K = @(X,Y,Z) 1/mu*pagemtimes(X,'transpose',Z,'none');
-%    2) W: A dataset of trajectories (3D array)
+%    2) X: A dataset of trajectories (3D array)
 %          First dimension: State 
 %          Second dimension: Time (size = length of longest trajectory)
 %          Third dimension: Trajectory number
@@ -40,7 +40,7 @@
 %
 % *Sample times for shorter trajectories need to be padded with NaNs.*
 %
-%    5) WDot0: (Optional argument) Initial time derivatives
+%    5) XDot0: (Optional argument) Initial time derivatives
 %          First dimension: State 
 %          Second dimension: Trajectory number
 %    6) l: (Optional argument) Regularization coefficient
@@ -54,44 +54,44 @@
 %
 % © Rushikesh Kamalapurkar, Ben Russo, and Joel Rosenfeld
 %
-function [Z,L,ef,r,f] = SecondOrderLiouvilleDMD(K,W,t,varargin)
+function [Z,L,ef,r,f] = SecondOrderLiouvilleDMD(K,X,t,varargin)
 if nargin == 3
-    if size(W,1)==1
-        WDiff = (squeeze(W(:,2,:) - W(:,1,:))).';
+    if size(X,1)==1
+        XDiff = (squeeze(X(:,2,:) - X(:,1,:))).';
     else
-        WDiff = squeeze(W(:,2,:) - W(:,1,:));
+        XDiff = squeeze(X(:,2,:) - X(:,1,:));
     end
-    WDot0 = WDiff./(t(2,:) - t(1,:));
+    XDot0 = XDiff./(t(2,:) - t(1,:));
     l = 0;
 elseif nargin == 4
-    WDot0 = varargin{1};
+    XDot0 = varargin{1};
     l = 0;
 elseif nargin == 5
-    WDot0 = varargin{1};
-    if isempty(WDot0)
-        if size(W,1)==1
-            WDiff = (squeeze(W(:,2,:) - W(:,1,:))).';
+    XDot0 = varargin{1};
+    if isempty(XDot0)
+        if size(X,1)==1
+            XDiff = (squeeze(X(:,2,:) - X(:,1,:))).';
         else
-            WDiff = squeeze(W(:,2,:) - W(:,1,:));
+            XDiff = squeeze(X(:,2,:) - X(:,1,:));
         end
-        WDot0 = WDiff./(t(2,:) - t(1,:));
+        XDot0 = XDiff./(t(2,:) - t(1,:));
     end
     l = varargin{2};
 elseif nargin > 5
     error("Too many input arguments");
 end
     
-N = size(W,3); % Total number of trajectories
+M = size(X,3); % Total number of trajectories
 
 % Store trajectory lengths for interaction matrix calculation
-Lengths = size(t,1) - sum(isnan(t));
+N = size(t,1) - sum(isnan(t));
 
 % Simpsons rule weights
-S = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
+w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
 t(isnan(t))=0;
 T=zeros(1,1,size(t,2));
 for i=1:size(t,2)
-    if Lengths(i) == 1
+    if N(i) == 1
         T(1,1,i) = t(1,i);
     else
         T(1,1,i) = t(find(t(:,i),1,'last'),i);
@@ -99,20 +99,20 @@ for i=1:size(t,2)
 end
 t = reshape(t,size(t,1),1,size(t,2));
 % Gram matrix and interaction matrix
-G=zeros(N);
-I=zeros(N);
-ST=S.*(T-t);
-for j=1:N
-    G(:,j) = squeeze(pagemtimes(ST,'transpose',pagemtimes(K.K(W,W(:,:,j)),ST(:,1,j)),'none'));
-    I(:,j) = squeeze(pagemtimes(ST,'transpose',K.K(W,W(:,Lengths(j),j)) - K.K(W,W(:,1,j)) - T(1,1,j).*K.G2K(W,W(:,1,j),WDot0(:,j)),'none'));
+G=zeros(M);
+I=zeros(M);
+wT=w.*(T-t);
+for j=1:M
+    G(:,j) = squeeze(pagemtimes(wT,'transpose',pagemtimes(K.K(X,X(:,:,j)),wT(:,1,j)),'none'));
+    I(:,j) = squeeze(pagemtimes(wT,'transpose',K.K(X,X(:,N(j),j)) - K.K(X,X(:,1,j)) - T(1,1,j).*K.G2K(X,X(:,1,j),XDot0(:,j)),'none'));
 end
 
 % DMD
 G = G + l*eye(size(G));
 [V,D] = eig(G\I.'); % Eigendecomposition of finite rank representation
 C = V./diag(sqrt(V'*G*V)).'; % Liouville eigenfunction coefficients
-IntMat = squeeze(pagemtimes(W,ST)); % Integrals of trajectories
-if size(W,1)==1
+IntMat = squeeze(pagemtimes(X,wT)); % Integrals of trajectories
+if size(X,1)==1
     IntMat = IntMat.';
 end
 Z = IntMat/(C.'*G); % Liouville modes
@@ -120,17 +120,17 @@ L = diag(D); % Liouville eigenvalues
 
 % Reconstruction
 % Occupation kernels evaluated at x0: 
-%   squeeze(pagemtimes(ST,'transpose',K.K(W,x0),'none'))
+%   squeeze(pagemtimes(ST,'transpose',K.K(X,x0),'none'))
 % Eigenfunctions evaluated at x0:
-ef = @(x) C.'*squeeze(pagemtimes(ST,'transpose',K.K(W,x),'none'));
+ef = @(x) C.'*squeeze(pagemtimes(wT,'transpose',K.K(X,x),'none'));
 % Time derivative of eigenfunctions at t = 0:
-%   C.'*squeeze(pagemtimes(ST,'transpose',K.G2K(W,x0,xDot0),'none'))
+%   C.'*squeeze(pagemtimes(ST,'transpose',K.G2K(X,x0,xDot0),'none'))
 % Reconstruction function:
 r = @(t,x0,xDot0) real(Z*(...
-    0.5*(C.'*squeeze(pagemtimes(ST,'transpose',K.K(W,x0),'none'))...
-    + (C.'*squeeze(pagemtimes(ST,'transpose',K.G2K(W,x0,xDot0),'none')))./sqrt(L)).*exp(sqrt(L)*t) +...
-    0.5*(C.'*squeeze(pagemtimes(ST,'transpose',K.K(W,x0),'none'))...
-    - (C.'*squeeze(pagemtimes(ST,'transpose',K.G2K(W,x0,xDot0),'none')))./sqrt(L)).*exp(-sqrt(L)*t)));
+    0.5*(C.'*squeeze(pagemtimes(wT,'transpose',K.K(X,x0),'none'))...
+    + (C.'*squeeze(pagemtimes(wT,'transpose',K.G2K(X,x0,xDot0),'none')))./sqrt(L)).*exp(sqrt(L)*t) +...
+    0.5*(C.'*squeeze(pagemtimes(wT,'transpose',K.K(X,x0),'none'))...
+    - (C.'*squeeze(pagemtimes(wT,'transpose',K.G2K(X,x0,xDot0),'none')))./sqrt(L)).*exp(-sqrt(L)*t)));
 % Vector field
-f = @(x) real(Z*D*C.'*squeeze(pagemtimes(ST,'transpose',K.K(W,x),'none')));
+f = @(x) real(Z*D*C.'*squeeze(pagemtimes(wT,'transpose',K.K(X,x),'none')));
 end
