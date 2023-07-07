@@ -123,20 +123,21 @@ xlabel('Time (s)')
 set(gca,'fontsize',16)
 legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
 'interpreter','latex','fontsize',16,'location','east')
-temp=[t_pred.' y y_pred_SVD];
-save('DuffingSCLDMDReconstruction.dat','temp','-ascii');
-temp=[t_pred.' y-y_pred_SVD];
-save('DuffingSCLDMDError.dat','temp','-ascii');
 
-temp=[t_pred.' y y_pred_Eig];
-save('DuffingCLDMDReconstruction.dat','temp','-ascii');
-temp=[t_pred.' y-y_pred_Eig];
-save('DuffingCLDMDError.dat','temp','-ascii');
+% temp=[t_pred.' y y_pred_SVD];
+% save('DuffingSCLDMDReconstruction.dat','temp','-ascii');
+% temp=[t_pred.' y-y_pred_SVD];
+% save('DuffingSCLDMDError.dat','temp','-ascii');
 
-temp=[t_pred.' y y_pred_Eig_dir];
-save('DuffingCLDMDReconstructionDirect.dat','temp','-ascii');
-temp=[t_pred.' y-y_pred_Eig_dir];
-save('DuffingCLDMDErrorDirect.dat','temp','-ascii');
+% temp=[t_pred.' y y_pred_Eig];
+% save('DuffingCLDMDReconstruction.dat','temp','-ascii');
+% temp=[t_pred.' y-y_pred_Eig];
+% save('DuffingCLDMDError.dat','temp','-ascii');
+
+% temp=[t_pred.' y y_pred_Eig_dir];
+% save('DuffingCLDMDReconstructionDirect.dat','temp','-ascii');
+% temp=[t_pred.' y-y_pred_Eig_dir];
+% save('DuffingCLDMDErrorDirect.dat','temp','-ascii');
 
 %% Vector field
 
@@ -168,8 +169,8 @@ max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0_Eig)))
 % save('DuffingSCLDMDVectorFieldDim2Hat.dat','temp','-ascii');
 % % temp = [IVeval.' (abs(x_dot_at_x0(2,:) -  x_dot_hat_at_x0_SVD(2,:))./max(abs(x_dot_at_x0(2,:)))).'];
 % % save('DuffingSCLDMDVectorFieldDim2Error.dat','temp','-ascii');
-temp = [IVeval.' vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_SVD)./max(vecnorm(x_dot_at_x0))).'];
-save('DuffingSCLDMDVectorFieldError.dat','temp','-ascii');
+% temp = [IVeval.' vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_SVD)./max(vecnorm(x_dot_at_x0))).'];
+% save('DuffingSCLDMDVectorFieldError.dat','temp','-ascii');
 % 
 % temp = [IVeval.' x_dot_hat_at_x0_Eig(1,:).'];
 % save('DuffingCLDMDVectorFieldDim1Hat.dat','temp','-ascii');
@@ -179,8 +180,8 @@ save('DuffingSCLDMDVectorFieldError.dat','temp','-ascii');
 % save('DuffingCLDMDVectorFieldDim2Hat.dat','temp','-ascii');
 % % temp = [IVeval.' (abs(x_dot_at_x0(2,:) -  x_dot_hat_at_x0_Eig(2,:))./max(abs(x_dot_at_x0(2,:)))).'];
 % % save('DuffingCLDMDVectorFieldDim2Error.dat','temp','-ascii');
-temp = [IVeval.' vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_Eig)./max(vecnorm(x_dot_at_x0))).'];
-save('DuffingCLDMDVectorFieldError.dat','temp','-ascii');
+% temp = [IVeval.' vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_Eig)./max(vecnorm(x_dot_at_x0))).'];
+% save('DuffingCLDMDVectorFieldError.dat','temp','-ascii');
 
 figure
 surf(XX,YY,reshape(vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_Eig)./max(vecnorm(x_dot_at_x0))),9,9))
