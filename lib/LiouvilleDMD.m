@@ -5,9 +5,9 @@
 % This function performs dynamic mode decomposition of a dynamical system
 % from sampled trajectories of the system. 
 %
-% [Z,L,ef,r,f] = LiouvilleDMD(K,X,t) OR
-% [Z,L,ef,r,f] = LiouvilleDMD(K,X,t,a) OR
-% [Z,L,ef,r,f] = LiouvilleDMD(K,X,t,a,l)
+% [Z,D,ef,r,f] = LiouvilleDMD(K,X,t) OR
+% [Z,D,ef,r,f] = LiouvilleDMD(K,X,t,a) OR
+% [Z,D,ef,r,f] = LiouvilleDMD(K,X,t,a,l)
 %
 % Inputs:
 %    1) K: A kernel object, where K.K is the kernel function
@@ -18,9 +18,9 @@
 %             K.K = @(X,Y) exp(1/mu*pagemtimes(X,'transpose',Y,'none'));
 %
 %    2) X: A dataset of trajectories (3D array)
-%          First dimension: State 
-%          Second dimension: Time (size = length of longest trajectory)
-%          Third dimension: Trajectory number
+%          First dimension: State (n)
+%          Second dimension: Time (size = length of longest trajectory) (N)
+%          Third dimension: Trajectory number (M)
 %
 % *Trajectories can be of different lengths and irregularly sampled.*
 % *The number of samples in each trajectory needs to be odd.*
@@ -39,17 +39,17 @@
 %          (needed if the Gram matrix is rank deficient)
 %
 % Outputs:
-%    1) Z: Liouville modes (State dimension x number of modes)
-%    2) L: Eigenvalues (number of modes x 1)
+%    1) Z: Liouville modes (n x M)
+%    2) D: Diagonal matrix of eigenvalues (M x M)
 %    3) ef: Eigenfunctions
-%    4) r: Reconstruction function
+%    4) r: Trajectory prediction function
 %    5) f: Vector field
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-function [Z,L,ef,r,f] = LiouvilleDMD(K,X,t,varargin)
+function [Z,D,ef,r,f] = LiouvilleDMD(K,X,t,varargin)
 
-% Processing optional arguments and setting defaults
+% Process optional arguments and set defaults
 if nargin == 3
     a = 1; % default
     l = 0; % default
@@ -73,12 +73,8 @@ end
     
 M = size(X,3); % Total number of trajectories
 n = size(X,1); % State Dimension
-
-% Store trajectory lengths for interaction matrix calculation
-N = size(t,1)-sum(isnan(t));
-
-% Simpsons rule weights
-w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
+N = size(t,1)-sum(isnan(t)); % Trajectory lengths
+w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2)); % Simpsons rule weights
 
 % Gram matrix and interaction matrix
 G=zeros(M);
@@ -94,14 +90,9 @@ G = G + l*eye(size(G)); % Regularization
 C = V./diag(sqrt(V'*G*V)).'; % Normalized eigenvectors of finite rank representation
 IntMat = reshape(pagemtimes(X,w),n,M); % Integrals of trajectories
 Z = IntMat/(C.'*G); % Liouville modes
-L = diag(D); % Eigenvalues of the finite-rank representation
+ef = @(x) C.'*squeeze(pagemtimes(K.K(x,X),w)); % Eigenfunctions evaluated at x
 
-% Reconstruction
-% Occupation kernels evaluated at x0: squeeze(pagemtimes(K(x0,W),S))
-% Eigenfunctions evaluated at x
-ef = @(x) C.'*squeeze(pagemtimes(K.K(x,X),w));
-% Reconstruction function:
-r = @(t,x0) real(Z*((C.'*squeeze(pagemtimes(K.K(x0,X),w))).*exp(L*t))); 
-% Vector field:
-f = @(x) real((1/a)*Z*((C.'*squeeze(pagemtimes(K.K(x,X),w))).*L));
+% SysID
+r = @(t,x0) real(Z*expm((1/a)*D*t)*C.'*squeeze(pagemtimes(K.K(x0,X),w))); % Trajectory Prediction
+f = @(x) real(1/a*Z*D*C.'*squeeze(pagemtimes(K.K(x,X),w))); % Vector Field Estimation
 end

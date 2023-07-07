@@ -3,8 +3,8 @@
 %
 % https://arxiv.org/abs/2106.02639
 %
-% [Z,L,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,X,T) OR
-% [Z,L,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,X,T,l)
+% [Z,D,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,X,T) OR
+% [Z,D,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,X,T,l)
 %
 % Inputs:
 %  1,2) K,KT: Objects of the class 'Kernel', K.K is the kernel function
@@ -34,15 +34,15 @@
 %
 % Outputs:
 %    1) Z: Liouville modes (State dimension x number of modes)
-%    2) L: Eigenvalues (number of modes x 1)
+%    2) D: Diagonal matrix of eigenvalues (number of modes x number of modes)
 %    3) ef: Eigenfunction coefficients (number of modes x number of modes)
 %    4) r: Reconstruction function
 %    5) f: Approximation of the vector field
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-function [Z,L,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,X,t,varargin)
-% Processing optional arguments and setting defaults
+function [Z,D,ef,r,f] = ConvergentLiouvilleEigenDMD(K,KT,X,t,varargin)
+% Process optional arguments and set defaults
 if nargin == 4
     l = 0; % default
 elseif nargin == 5
@@ -60,12 +60,8 @@ end
 
 M = size(X,3); % Total number of trajectories
 n = size(X,1); % State Dimension
-
-% Store trajectory lengths for interaction matrix calculation
-N = size(t,1)-sum(isnan(t));
-
-% Simpsons rule weights
-w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
+N = size(t,1)-sum(isnan(t)); % Trajectory lengths
+w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2)); % Simpsons rule weights
 
 % Gram matrix and interaction matrix
 G1=zeros(M);
@@ -91,14 +87,9 @@ GT = GT + l*eye(size(GT)); % Regularization
 C = V./diag(sqrt(V'*G*V)).'; % Normalized eigenvectors of the finite rank representation
 IntMat = reshape(pagemtimes(X,w),n,M); % Integrals of trajectories
 Z = IntMat/(C.'*G); % Liouville modes
-L = diag(D); % Eigenvalues of the finite-rank representation
+ef = @(x) C.'*squeeze(pagemtimes(K.K(x,X),w)); % Eigenfunctions evaluated at x
 
-% Reconstruction
-% Occupation kernels evaluated at x0: squeeze(pagemtimes(K(x0,W),S))
-% Eigenfunctions evaluated at x:
-ef = @(x) C.'*squeeze(pagemtimes(K.K(x,X),w));
-% Reconstruction function:
-r = @(t,x) Z*((C.'*squeeze(pagemtimes(K.K(x,X),w))).*exp(L*t)); 
-% Vector field:
-f = @(x) real(Z*((C.'*squeeze(pagemtimes(K.K(x,X),w))).*L));
+% SysID
+r = @(t,x) real(Z*expm((1/a)*D*t)*C.'*squeeze(pagemtimes(K.K(x,X),w))); % Trajectory prediction
+f = @(x) real(Z*D*C.'*squeeze(pagemtimes(K.K(x,X),w))); % Vector field
 end

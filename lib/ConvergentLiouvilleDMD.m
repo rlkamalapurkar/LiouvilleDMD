@@ -41,7 +41,7 @@
 % © Rushikesh Kamalapurkar
 %
 function [Z,S,lsf,rsf,f] = ConvergentLiouvilleDMD(Kd,Kr,X,t,varargin)
-% Processing optional arguments and setting defaults
+% Process optional arguments and set defaults
 if nargin == 4
     l = 0; % default
 elseif nargin == 5
@@ -52,12 +52,8 @@ end
 
 M = size(X,3); % Total number of trajectories
 n = size(X,1); % State Dimension
-
-% Store trajectory lengths for interaction matrix calculation
-N = size(t,1)-sum(isnan(t));
-
-% Simpsons rule weights
-w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
+N = size(t,1)-sum(isnan(t)); % Trajectory lengths
+w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2)); % Simpsons rule weights
 
 % Gram matrix and kernel difference matrix
 Gr=zeros(M);
@@ -71,15 +67,11 @@ end
 Gr = Gr + l*eye(size(Gr)); % Regularization
 [W,S,V] = svd(inv(Gr)); % SVD of Gr
 Z = D*V; % Liouville modes
-
-% Occupation kernels evaluated at x: squeeze(pagemtimes(K(x,W),S))
-% Right singular functions evaluated at x:
-rsf = @(x) W.'*squeeze(pagemtimes(Kr.K(x,X),w));
-% Left singular functions evaluated at x:
+rsf = @(x) W.'*squeeze(pagemtimes(Kr.K(x,X),w)); % Right singular functions evaluated at x
 lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,N(l),l)),(1:M).') ...
-    - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:M).'));
+    - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:M).')); % Left singular functions evaluated at x
 
-% Vector field:
+% SysID
 temp=D/Gr;
-f = @(x) real(temp*squeeze(pagemtimes(Kr.K(x,X),w)));
+f = @(x) real(temp*squeeze(pagemtimes(Kr.K(x,X),w))); % Vector field
 end

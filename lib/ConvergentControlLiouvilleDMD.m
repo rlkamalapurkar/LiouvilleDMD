@@ -4,8 +4,8 @@
 % dynamical system from sampled state and control trajectories of the 
 % system. 
 %
-% [Z,L,lsf,rsf,f] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,t,mu) OR
-% [Z,L,lsf,rsf,f] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,t,mu,l)
+% [Z,S,lsf,rsf,f] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,t,mu) OR
+% [Z,S,lsf,rsf,f] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,t,mu,l)
 %
 % Inputs:
 %    1) Kd: domain svRKHS kernel 
@@ -47,9 +47,10 @@ M = size(X,3); % Number of trajectories
 m = size(U,1); % Control dimension
 n = size(X,1); % State dimension
 maxN = size(X,2); % Number of samples in longest trajectory
+N = size(t,1)-sum(isnan(t)); % Trajectory lengths
+w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2)); % Simpsons rule weights
 
-% Values of the feedback controller
-MU = mu(X);
+MU = mu(X); % Values of the feedback controller
 
 % Concatenate control arrays with 1 in the first dimension
 U = cat(1,ones(1,maxN,M),U(:,(1:maxN),:));
@@ -58,12 +59,6 @@ MU = cat(1,ones(1,maxN,M),MU(:,(1:maxN),:));
 % Make 3D control arrays into 4D arrays for Gram matrix calculations
 U = reshape(permute(U,[2,3,1]),maxN,1,M,m+1);
 MU = reshape(permute(MU,[2,3,1]),maxN,1,M,m+1);
-
-% Store trajectory lengths for interaction matrix calculation
-N = size(t,1)-sum(isnan(t));
-
-% Simpsons rule weights
-w = reshape(genSimpsonsRuleWeights(t,1),size(t,1),1,size(t,2));
 
 % Control OCC Gram matrix and interaction matrix - M x M
 Gb = zeros(M);
@@ -85,13 +80,9 @@ Gb=Gb+l*eye(size(Gb)); % Regularization
 FRR=Gr\(I/Gb);
 [W,S,V] = svd(FRR); % SVD of the finite rank representation
 Z = D*V; % Liouville modes
-
-% Occupation kernels evaluated at x: squeeze(pagemtimes(K(x,W),S))
-% Right singular functions evaluated at x:
-rsf = @(x) W.'*squeeze(pagemtimes(Kr.K(x,X),w));
-% Left singular functions evaluated at x:
+rsf = @(x) W.'*squeeze(pagemtimes(Kr.K(x,X),w)); % Right singular functions evaluated at x
 lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,N(l),l)),(1:M).') ...
-    - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:M).'));
-% Reconstruction
-f = @(x) real(D*FRR.'*squeeze(pagemtimes(Kr.K(x,X),w))); % vectorfield
+    - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:M).')); % Left singular functions evaluated at x
+% SysID
+f = @(x) real(D*FRR.'*squeeze(pagemtimes(Kr.K(x,X),w))); % Vector field
 end

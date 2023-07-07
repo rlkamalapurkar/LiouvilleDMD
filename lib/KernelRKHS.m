@@ -107,5 +107,19 @@ classdef KernelRKHS
                 error(['Kernel type' obj.type 'not implemented']);
             end
         end
+
+        function y = OKGram(obj,X,wx,Y,wy)
+            y=zeros(size(X,3),size(Y,3));
+            for i=1:size(Y,3)
+                y(:,i) = squeeze(pagemtimes(pagemtimes(wx(:,1,i).',obj.K(X(:,:,i),Y)),wy));
+            end
+        end
+
+        function y = OK(obj,x,X,w)
+            y=zeros(size(X,3),size(x,2));
+            for i=1:size(x,2)
+                y(:,i) = squeeze(pagemtimes(obj.K(x,X),w));
+            end
+        end
     end
 end
