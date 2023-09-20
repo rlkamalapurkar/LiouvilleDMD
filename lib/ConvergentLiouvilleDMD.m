@@ -2,7 +2,8 @@
 % a dynamical system from sampled trajectories.
 %
 % [Z,S,lsf,rsf,f] = ConvergentLiouvilleDMD(Kd,Kr,X,T) OR
-% [Z,S,lsf,rsf,f] = ConvergentLiouvilleDMD(Kd,Kr,X,T,l)
+% [Z,S,lsf,rsf,f] = ConvergentLiouvilleDMD(Kd,Kr,X,T,RegTol=l) OR
+% [Z,S,lsf,rsf,f] = ConvergentLiouvilleDMD(Kd,Kr,X,T,PinvTol=l)
 %
 % Inputs:
 %  1,2) Kd,Kr: Objects of the class 'KernelRKHS' for the domain and the
@@ -28,8 +29,12 @@
 %
 % *Sample times for shorter trajectories need to be padded with NaNs.*
 %
-%    5) l: (Optional argument, default=0) Regularization coefficient
-%          (needed if the Gram matrix is rank deficient)
+%    5) l: (Optional argument, default=0) Regularization coefficient or
+%          pseudoinverse truncation tolerance. By default, the Gram matrix
+%          is inverted using MATLAB's pinv function. If PinvTol is
+%          supplied, it is passed to pinv as tolerance. If RegTol is set
+%          instead, then the Gram matrix G is regularized as G = G + lI
+%          before it is inverted.
 %
 % Outputs:
 %    1) Z: Liouville modes (State dimension x number of modes)
@@ -40,16 +45,20 @@
 %
 % © Rushikesh Kamalapurkar
 %
-function [Z,S,lsf,rsf,f] = ConvergentLiouvilleDMD(Kd,Kr,X,t,varargin)
+function [Z,S,lsf,rsf,f] = ConvergentLiouvilleDMD(Kd,Kr,X,t,NameValueArgs)
 % Process optional arguments and set defaults
-if nargin == 4
-    l = 0; % default
-elseif nargin == 5
-    l = varargin{1};
-elseif nargin > 5
-    error("Too many input arguments.")
+arguments
+    Kd
+    Kr
+    X double
+    t double
+    NameValueArgs.RegTol (1,1) {mustBeNumeric} = 0
+    NameValueArgs.PinvTol (1,1) {mustBeNumeric} = 0
 end
-
+if NameValueArgs.RegTol ~= 0 && NameValueArgs.PinvTol ~=0
+    warning('RegTol and PinvTol are both nonzero, defaulting to pseudoinverse. Call with RegTol ~= 0 and PinvTol = 0 to use regularization.');
+end
+    
 M = size(X,3); % Total number of trajectories
 n = size(X,1); % State Dimension
 N = size(t,1)-sum(isnan(t)); % Trajectory lengths
@@ -64,14 +73,24 @@ for i=1:M
 end
 
 % DMD
-Gr = Gr + l*eye(size(Gr)); % Regularization
-[W,S,V] = svd(inv(Gr)); % SVD of Gr
+if NameValueArgs.PinvTol == 0 && NameValueArgs.RegTol == 0
+    GrInv = pinv(Gr);
+    disp('Inverting Gram matrices using pseudoinverse.')
+elseif NameValueArgs.PinvTol ~= 0
+    GrInv = pinv(Gr,NameValueArgs.PinvTol);
+    disp('Inverting Gram matrices using pseudoinverse.')
+elseif NameValueArgs.RegTol ~= 0
+    GrInv = inv(Gr + NameValueArgs.RegTol*eye(size(Gr)));
+    disp('Inverting Gram matrices using regularization.')
+end
+
+[W,S,V] = svd(GrInv); % SVD of the inverse of Gr
 Z = D*V; % Liouville modes
 rsf = @(x) W.'*squeeze(pagemtimes(Kr.K(x,X),w)); % Right singular functions evaluated at x
 lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,N(l),l)),(1:M).') ...
     - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:M).')); % Left singular functions evaluated at x
 
 % SysID
-temp=D/Gr;
+temp=D*GrInv;
 f = @(x) real(temp*squeeze(pagemtimes(Kr.K(x,X),w))); % Vector field
 end

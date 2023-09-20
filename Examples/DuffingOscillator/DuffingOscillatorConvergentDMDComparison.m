@@ -57,17 +57,17 @@ end
 
 % Exponential, first order
 
-% mu = 2.0; 
+% mu = 500.0; 
 % Kr = KernelRKHS('Gaussian',mu);
-% mu = 2.1; 
+% mu = 501.0; 
 % Kd = KernelRKHS('Gaussian',mu);
-% Regularization = 0;
+% PinvTol = 0;
 
-mur = 309; 
-Kr = KernelRKHS('Exponential',mur);
-mud = 310; 
-Kd = KernelRKHS('Exponential',mud);
-Regularization = 1e-8;
+mu = 359; 
+Kr = KernelRKHS('Exponential',mu);
+mu = 360; 
+Kd = KernelRKHS('Exponential',mu);
+PinvTol = 0;
 
 % mu = 1;
 % degree = 3;
@@ -75,14 +75,25 @@ Regularization = 1e-8;
 % Kr = KernelRKHS('Polynomial',[mu,degree,bias]);
 % mu = 2;
 % Kd = KernelRKHS('Polynomial',[mu,degree,bias]);
-% Regularization = 1e-6;
+% PinvTol = 0;
+% RegTol = 1e-6;
 
+% Kernel for Liouville DMD
+% K=Kr;
+% Regularization = 1e-9; % Gaussian
+
+mu = 309; 
+K = KernelRKHS('Exponential',mu);
+Regularization = 1e-8; % Exponential
+
+% K=Kr;
+% Regularization = 1e-3; % Polynomial
 %% Liouville DMD
 ScalingFactor = 1;
 tic
-[Z,S,lsf,rsf,fc] = ConvergentLiouvilleDMD(Kd,Kr,State,SampleTime,Regularization);
+[Z,S,lsf,rsf,fc] = ConvergentLiouvilleDMD(Kd,Kr,State,SampleTime,PinvTol=PinvTol);
 toc
-[~,~,~,~,f1] = LiouvilleDMD(Kr,State,SampleTime,ScalingFactor,Regularization);
+[~,~,~,~,f1] = LiouvilleDMD(K,State,SampleTime,ScalingFactor,Regularization);
 
 %% Reconstruction
 T = 0:0.1:20;
@@ -135,11 +146,11 @@ end
 temp = [IVeval.' vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_c)./max(vecnorm(x_dot_at_x0))).'];
 disp(['Maximum vectorfield estimation error for convergent DMD is ' num2str(max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0_c))))])
 disp(['Maximum vectorfield estimation error for DMD is ' num2str(max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0))))])
-% figure
-% surf(XX,YY,reshape(vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_c)./max(vecnorm(x_dot_at_x0))),GridSize,GridSize),'EdgeColor','none','FaceColor','interp')
-% xlabel('$x_1$','interpreter','latex','fontsize',14)
-% ylabel('$x_2$','interpreter','latex','fontsize',14)
-% zlabel('Relative Error Norm','interpreter','latex','fontsize',14)
+figure
+surf(XX,YY,reshape(vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_c)./max(vecnorm(x_dot_at_x0))),GridSize,GridSize),'EdgeColor','none','FaceColor','interp')
+xlabel('$x_1$','interpreter','latex','fontsize',14)
+ylabel('$x_2$','interpreter','latex','fontsize',14)
+zlabel('Relative Error Norm','interpreter','latex','fontsize',14)
 % f_saveplot('DuffingConvergentVectorField','fontsize',14)
 % save('DuffingConvergentVectorField.dat','temp','-ascii');
 

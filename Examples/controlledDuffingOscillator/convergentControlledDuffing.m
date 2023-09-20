@@ -56,21 +56,33 @@ SampleTime = cell2mat(cellfun(@(x) [x;NaN(maxLength-length(x),1)],...
 % max(X(2,:,:),[],'all')
 % min(X(2,:,:),[],'all')
 %% Kernels
-e = 1e-8;
-kd = 20;
+
+% Best kernel parameters for pseudoinverse
+e = 0;
+kd = 7;
 Kd=KernelRKHS('Exponential',kd);
-k = 15;
+k = 6;
 K=KernelvvRKHS('Exponential',k*ones(m+1,1));
-kr = 10;
+kr = 5;
 Kr=KernelRKHS('Exponential',kr);
+
+% Best kernel parameters for regularization
+% e = 1e-8;
+% kd = 20;
+% Kd=KernelRKHS('Exponential',kd);
+% k = 15;
+% K=KernelvvRKHS('Exponential',k*ones(m+1,1));
+% kr = 10;
+% Kr=KernelRKHS('Exponential',kr);
 
 %% Feedback controller
 mu = @(x) -2*x(1,:,:) - 1*x(2,:,:);
 
 %% SCLDMD
-[~,~,~,~,fHat_SVD] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,SampleTime,mu,e);
+[~,~,~,~,fHat_SVD] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,SampleTime,mu,RegTol=e);
 
 % Indirect CLDMD for comparison
+e = 1e-8;
 k = 10;
 K=KernelvvRKHS('Exponential',k*ones(m+1,1));
 KT=KernelRKHS('Exponential',k);
@@ -153,8 +165,8 @@ for i=1:size(IVeval,2)
     x_dot_hat_at_x0_Eig = [x_dot_hat_at_x0_Eig fHat_Eig(x0)];
     x_dot_at_x0 = [x_dot_at_x0, f(x0)+g(x0)*mu(x0)];
 end
-max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0_SVD)))
-max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0_Eig)))
+disp(['SVD error is ' num2str(max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0_SVD))))])
+disp(['EIG error is ' num2str(max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0_Eig))))])
 
 % temp = [IVeval.' x_dot_at_x0(1,:).'];
 % save('DuffingVectorFieldDim1.dat','temp','-ascii');

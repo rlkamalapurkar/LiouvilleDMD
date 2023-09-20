@@ -5,7 +5,8 @@
 % system. 
 %
 % [Z,S,lsf,rsf,f] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,t,mu) OR
-% [Z,S,lsf,rsf,f] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,t,mu,l)
+% [Z,S,lsf,rsf,f] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,t,mu,RegTol=l) OR
+% [Z,S,lsf,rsf,f] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,t,mu,PinvTol=l)
 %
 % Inputs:
 %    1) Kd: domain svRKHS kernel 
@@ -32,15 +33,22 @@
 %    4) rsf: Right singular functions
 %    5) f  :  Vector field
 %
-function [Z,S,rsf,lsf,f] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,t,mu,varargin)
+function [Z,S,rsf,lsf,f] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,t,mu,NameValueArgs)
 
 % Processing optional arguments and setting defaults
-if nargin == 7
-    l = 0; % default
-elseif nargin == 8
-    l = varargin{1};
-elseif nargin > 8
-    error("Too many input arguments.")
+arguments
+    Kd
+    Kr
+    K
+    X double
+    U double
+    t double
+    mu
+    NameValueArgs.RegTol (1,1) {mustBeNumeric} = 0
+    NameValueArgs.PinvTol (1,1) {mustBeNumeric} = 0
+end
+if NameValueArgs.RegTol ~= 0 && NameValueArgs.PinvTol ~=0
+    warning('RegTol and PinvTol are both nonzero, defaulting to pseudoinverse. Call with RegTol ~= 0 and PinvTol = 0 to use regularization.');
 end
 
 M = size(X,3); % Number of trajectories
@@ -75,14 +83,29 @@ for i=1:M
 end
 
 % DMD
-Gr=Gr+l*eye(size(Gr)); % Regularization
-Gb=Gb+l*eye(size(Gb)); % Regularization
-FRR=Gr\(I/Gb);
+if NameValueArgs.PinvTol == 0 && NameValueArgs.RegTol == 0
+    GrInv = pinv(Gr);
+    GbInv = pinv(Gb);
+    FRR=GrInv*I*GbInv;
+    % disp('Inverting Gram matrices using pseudoinverse.')
+elseif NameValueArgs.PinvTol ~= 0
+    GrInv = pinv(Gr,NameValueArgs.PinvTol);
+    GbInv = pinv(Gb,NameValueArgs.PinvTol);
+    FRR=GrInv*I*GbInv;
+    % disp('Inverting Gram matrices using pseudoinverse.')
+elseif NameValueArgs.RegTol ~= 0
+    Gr=Gr+NameValueArgs.RegTol*eye(size(Gr)); % Regularization
+    Gb=Gb+NameValueArgs.RegTol*eye(size(Gb)); % Regularization
+    FRR=Gr\(I/Gb);
+    % disp('Inverting Gram matrices using regularization.')
+end
+
 [W,S,V] = svd(FRR); % SVD of the finite rank representation
 Z = D*V; % Liouville modes
 rsf = @(x) W.'*squeeze(pagemtimes(Kr.K(x,X),w)); % Right singular functions evaluated at x
 lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,N(l),l)),(1:M).') ...
     - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:M).')); % Left singular functions evaluated at x
+
 % SysID
 f = @(x) real(D*FRR.'*squeeze(pagemtimes(Kr.K(x,X),w))); % Vector field
 end

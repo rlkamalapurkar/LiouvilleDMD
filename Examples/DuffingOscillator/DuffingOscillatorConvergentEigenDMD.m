@@ -3,7 +3,7 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
-function DuffingOscillatorConvergentDMD()
+function DuffingOscillatorConvergentEigenDMD()
 
 addpath('../../lib')
 %% Generate and format data for DMD
@@ -85,8 +85,9 @@ x = [3;-2];
 % % figure
 % % plot(TDirect,y(1:numel(TDirect),:),TDirect,yr1);legend('True x1','True x2','Reconstructed x1','Reconstructed x2');title('Direct Reconstruction');
 
+options = odeset(RelTol=1e-6,AbsTol=1e-6);
 % Indirect reconstruction convergent
-[~,yric]=ode45(@(t,x) fc(x),T,x);
+[~,yric]=ode45(@(t,x) fc(x),T,x,options);
 % 
 figure
 plot(T,y,T,yric);
@@ -97,8 +98,8 @@ temp=[T.' y yric];
 %save('DuffingConvergentReconstruction.dat','temp','-ascii');
 
 % Indirect reconstruction
-[~,yri1]=ode45(@(t,x) f1(x),T,x);
-[~,yri2]=ode45(@(t,x) f2(x),T,x);
+[~,yri1]=ode45(@(t,x) f1(x),T,x,options);
+[~,yri2]=ode45(@(t,x) f2(x),T,x,options);
 
 figure
 plot(T,y,T,yri1);legend('True x1','True x2','Reconstructed x1','Reconstructed x2');title('Reconstruction');
