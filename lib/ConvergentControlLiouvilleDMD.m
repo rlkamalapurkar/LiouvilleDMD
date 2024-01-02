@@ -24,13 +24,19 @@
 %           First dimension: Time (size = length of longest trajectory)
 %           Second dimension: Trajectory number
 %    6) mu: A feedback control function compatible with 3D arrays
-%    7) l:  (Optional argument, default=0) Regularization coefficient
+%    7) RegTol:  (Optional argument, default=0) Regularization coefficient
+%    8) PinvTol: (Optional argument, default=0) Pseudoinverse coefficient
+%
+% If RegTol and PinvTol are both nonzero or both zero, or if PinvTol is  
+% supplied but RegTol is not, then pseudoinverse is used to invert Gram 
+% matrices. If RegTol is supplied and PinvTol is not, then regularization 
+% is used to invert Gram matrices.
 %
 % Outputs:
 %    1) Z  :  Liouville modes (State dimension x number of modes)
 %    2) S  :  Singular Values (number of modes x 1)
-%    3) lsf: Left singular functions
-%    4) rsf: Right singular functions
+%    3) lsf:  Left singular functions
+%    4) rsf:  Right singular functions
 %    5) f  :  Vector field
 %
 function [Z,S,rsf,lsf,f] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,t,mu,NameValueArgs)

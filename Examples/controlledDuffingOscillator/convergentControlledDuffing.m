@@ -4,7 +4,7 @@
 %
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 function convergentControlledDuffing()
-rng(1)
+rng(1) % added to reproduce the plots in the paper, delete to randomize
 addpath('../../lib');
 
 %% Generate Trajectories
@@ -82,18 +82,16 @@ mu = @(x) -2*x(1,:,:) - 1*x(2,:,:);
 [~,~,~,~,fHat_SVD] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,SampleTime,mu,RegTol=e);
 
 % Indirect CLDMD for comparison
-e = 1e-8;
-k = 10;
-K=KernelvvRKHS('Exponential',k*ones(m+1,1));
-KT=KernelRKHS('Exponential',k);
-[~,~,~,~,fHat_Eig] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
+ke = 5;
+K=KernelvvRKHS('Exponential',ke*ones(m+1,1));
+KT=KernelRKHS('Exponential',ke);
+[~,~,~,~,fHat_Eig] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu);
 
 % Direct CLDMD for comparison
-kT = 1e6;
-e = 1e-8;
-K=KernelvvRKHS('Exponential',kT*ones(m+1,1));
-KT=KernelRKHS('Exponential',kT);
-[~,~,~,r,~] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
+ked = 1e8;
+K=KernelvvRKHS('Exponential',ked*ones(m+1,1));
+KT=KernelRKHS('Exponential',ked);
+[~,~,~,r,~] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu);
 %% Indirect reconstruction
 x0 = [2;-2];
 t_pred = 0:0.1:10;
@@ -104,23 +102,26 @@ y_pred_Eig_dir = zeros(size(y));
 for i=1:numel(t_pred)
     y_pred_Eig_dir(i,:) = r(t_pred(i),x0).';
 end
-% Plots
-% plot(t_pred,y,'linewidth',1)
-% hold on
-% set(gca,'ColorOrderIndex',1)
-% plot(t_pred,y_pred_SVD,'--','linewidth',2)
-% hold off
-% xlabel('Time (s)')
-% set(gca,'fontsize',16)
-% legend('$x_1(t)$','$x_2(t)$','$\hat{x}_1(t)$','$\hat{x}_2(t)$',...
-% 'interpreter','latex','fontsize',16,'location','southeast')
-% 
+
+%% Plots
+plot(t_pred,y,'linewidth',1)
+hold on
+set(gca,'ColorOrderIndex',1)
+plot(t_pred,y_pred_SVD,'--','linewidth',2)
+hold off
+xlabel('Time (s)')
+set(gca,'fontsize',16)
+legend('$x_1(t)$','$x_2(t)$','$\hat{x}_1(t)$','$\hat{x}_2(t)$',...
+'interpreter','latex','fontsize',16,'location','southeast')
+title('SCLDMD')
+
 figure
 plot(t_pred,y-y_pred_SVD,'linewidth',2)
 xlabel('Time (s)')
 set(gca,'fontsize',16)
 legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
 'interpreter','latex','fontsize',16,'location','east')
+title('SCLDMD Indirect Error')
 
 figure
 plot(t_pred,y-y_pred_Eig,'linewidth',2)
@@ -128,6 +129,7 @@ xlabel('Time (s)')
 set(gca,'fontsize',16)
 legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
 'interpreter','latex','fontsize',16,'location','east')
+title('CLDMD Indirect Error')
 
 figure
 plot(t_pred,y-y_pred_Eig_dir,'linewidth',2)
@@ -135,17 +137,19 @@ xlabel('Time (s)')
 set(gca,'fontsize',16)
 legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
 'interpreter','latex','fontsize',16,'location','east')
+title('CLDMD Direct Error')
 
+% % Store plot data for LaTeX
 % temp=[t_pred.' y y_pred_SVD];
 % save('DuffingSCLDMDReconstruction.dat','temp','-ascii');
 % temp=[t_pred.' y-y_pred_SVD];
 % save('DuffingSCLDMDError.dat','temp','-ascii');
-
+% 
 % temp=[t_pred.' y y_pred_Eig];
 % save('DuffingCLDMDReconstruction.dat','temp','-ascii');
 % temp=[t_pred.' y-y_pred_Eig];
 % save('DuffingCLDMDError.dat','temp','-ascii');
-
+% 
 % temp=[t_pred.' y y_pred_Eig_dir];
 % save('DuffingCLDMDReconstructionDirect.dat','temp','-ascii');
 % temp=[t_pred.' y-y_pred_Eig_dir];
@@ -168,41 +172,15 @@ end
 disp(['SVD error is ' num2str(max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0_SVD))))])
 disp(['EIG error is ' num2str(max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0_Eig))))])
 
-% temp = [IVeval.' x_dot_at_x0(1,:).'];
-% save('DuffingVectorFieldDim1.dat','temp','-ascii');
-% temp = [IVeval.' x_dot_at_x0(2,:).'];
-% save('DuffingVectorFieldDim2.dat','temp','-ascii');
-
-% temp = [IVeval.' x_dot_hat_at_x0_SVD(1,:).'];
-% save('DuffingSCLDMDVectorFieldDim1Hat.dat','temp','-ascii');
-% temp = [IVeval.' (abs(x_dot_at_x0(1,:) -  x_dot_hat_at_x0_SVD(1,:))./max(abs(x_dot_at_x0(1,:)))).'];
-% save('DuffingSCLDMDVectorFieldDim1Error.dat','temp','-ascii');
-% temp = [IVeval.' x_dot_hat_at_x0_SVD(2,:).'];
-% save('DuffingSCLDMDVectorFieldDim2Hat.dat','temp','-ascii');
-% % temp = [IVeval.' (abs(x_dot_at_x0(2,:) -  x_dot_hat_at_x0_SVD(2,:))./max(abs(x_dot_at_x0(2,:)))).'];
-% % save('DuffingSCLDMDVectorFieldDim2Error.dat','temp','-ascii');
-% temp = [IVeval.' vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_SVD)./max(vecnorm(x_dot_at_x0))).'];
-% save('DuffingSCLDMDVectorFieldError.dat','temp','-ascii');
-% 
-% temp = [IVeval.' x_dot_hat_at_x0_Eig(1,:).'];
-% save('DuffingCLDMDVectorFieldDim1Hat.dat','temp','-ascii');
-% temp = [IVeval.' (abs(x_dot_at_x0(1,:) -  x_dot_hat_at_x0_Eig(1,:))./max(abs(x_dot_at_x0(1,:)))).'];
-% save('DuffingCLDMDVectorFieldDim1Error.dat','temp','-ascii');
-% temp = [IVeval.' x_dot_hat_at_x0_Eig(2,:).'];
-% save('DuffingCLDMDVectorFieldDim2Hat.dat','temp','-ascii');
-% % temp = [IVeval.' (abs(x_dot_at_x0(2,:) -  x_dot_hat_at_x0_Eig(2,:))./max(abs(x_dot_at_x0(2,:)))).'];
-% % save('DuffingCLDMDVectorFieldDim2Error.dat','temp','-ascii');
-% temp = [IVeval.' vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_Eig)./max(vecnorm(x_dot_at_x0))).'];
-% save('DuffingCLDMDVectorFieldError.dat','temp','-ascii');
-
+% Vector field plots
 figure
 surf(XX,YY,reshape(vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_Eig)./max(vecnorm(x_dot_at_x0))),9,9))
 xlabel('$x_1$','interpreter','latex','fontsize',16)
-title('EIG')
+title('CLDMD')
 figure
 surf(XX,YY,reshape(vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_SVD)./max(vecnorm(x_dot_at_x0))),9,9))
 xlabel('$x_1$','interpreter','latex','fontsize',16)
-title('SVD')
+title('SCLDMD')
 % figure
 % surf(XX,YY,reshape(x_dot_hat_at_x0_SVD(2,:),9,9))
 % xlabel('$x_1$','interpreter','latex','fontsize',16)
@@ -231,6 +209,34 @@ title('SVD')
 % zlabel('$\left(f(x)+ g(x)\mu(x)\right)_1$','interpreter','latex','fontsize',16)
 % %f_saveplot('DuffingCLDMD_dim_1')
 % % set(gca,'fontsize',16)
+
+% % Store plot data for LaTeX
+% temp = [IVeval.' x_dot_at_x0(1,:).'];
+% save('DuffingVectorFieldDim1.dat','temp','-ascii');
+% temp = [IVeval.' x_dot_at_x0(2,:).'];
+% save('DuffingVectorFieldDim2.dat','temp','-ascii');
+% 
+% temp = [IVeval.' x_dot_hat_at_x0_SVD(1,:).'];
+% save('DuffingSCLDMDVectorFieldDim1Hat.dat','temp','-ascii');
+% temp = [IVeval.' (abs(x_dot_at_x0(1,:) -  x_dot_hat_at_x0_SVD(1,:))./max(abs(x_dot_at_x0(1,:)))).'];
+% save('DuffingSCLDMDVectorFieldDim1Error.dat','temp','-ascii');
+% temp = [IVeval.' x_dot_hat_at_x0_SVD(2,:).'];
+% save('DuffingSCLDMDVectorFieldDim2Hat.dat','temp','-ascii');
+% temp = [IVeval.' (abs(x_dot_at_x0(2,:) -  x_dot_hat_at_x0_SVD(2,:))./max(abs(x_dot_at_x0(2,:)))).'];
+% save('DuffingSCLDMDVectorFieldDim2Error.dat','temp','-ascii');
+% temp = [IVeval.' vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_SVD)./max(vecnorm(x_dot_at_x0))).'];
+% save('DuffingSCLDMDVectorFieldError.dat','temp','-ascii');
+% 
+% temp = [IVeval.' x_dot_hat_at_x0_Eig(1,:).'];
+% save('DuffingCLDMDVectorFieldDim1Hat.dat','temp','-ascii');
+% temp = [IVeval.' (abs(x_dot_at_x0(1,:) -  x_dot_hat_at_x0_Eig(1,:))./max(abs(x_dot_at_x0(1,:)))).'];
+% save('DuffingCLDMDVectorFieldDim1Error.dat','temp','-ascii');
+% temp = [IVeval.' x_dot_hat_at_x0_Eig(2,:).'];
+% save('DuffingCLDMDVectorFieldDim2Hat.dat','temp','-ascii');
+% temp = [IVeval.' (abs(x_dot_at_x0(2,:) -  x_dot_hat_at_x0_Eig(2,:))./max(abs(x_dot_at_x0(2,:)))).'];
+% save('DuffingCLDMDVectorFieldDim2Error.dat','temp','-ascii');
+% temp = [IVeval.' vecnorm((x_dot_at_x0 - x_dot_hat_at_x0_Eig)./max(vecnorm(x_dot_at_x0))).'];
+% save('DuffingCLDMDVectorFieldError.dat','temp','-ascii');
 end
 
 %% auxiliary functions

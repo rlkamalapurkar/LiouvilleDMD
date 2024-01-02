@@ -5,7 +5,7 @@
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
 function ConvergentTwoLinkRobot()
-% rng(1) % for reproducibility
+rng(1) % added to reproduce the plots in the paper, delete to randomize
 addpath('../../lib')
 %% Generate Trajectories
 n = 4; % Number of dimensions that f maps from/to
@@ -66,16 +66,16 @@ SampleTime = cell2mat(cellfun(@(x) [x;NaN(maxLength-length(x),1)],...
 %% Kernels
 
 % Best kernel parameters for regularization
-% kr = 5;
-% k = 10;
-% kd = 15;
-% e = 1e-3;
+kr = 5;
+k = 10;
+kd = 15;
+e = 1e-3;
 
-% Best kernel parameters for pseudoinverse
-kr = 0.6;
-k = 3*kr;
-kd = 4*kr;
-e = 0;
+% % Best kernel parameters for pseudoinverse
+% kr = 0.6;
+% k = 3*kr;
+% kd = 4*kr;
+% e = 0;
 
 K=KernelvvRKHS('Exponential',k*ones(m+1,1));
 Kr=KernelRKHS('Exponential',kr);
@@ -86,29 +86,29 @@ mu = @(x) cat(1, -5*x(1,:,:) - 5*x(2,:,:), -15*x(1,:,:) - 15*x(2,:,:));
 %% SCLDMD
 [~,~,~,~,fHat_SVD] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,SampleTime,mu,RegTol=e);
 
-% % Indirect CLDMD for comparison
-% k = 10;
-% e = 1e-3;
-% K=KernelvvRKHS('Exponential',k*ones(m+1,1));
-% KT=KernelRKHS('Exponential',k);
-% [~,~,~,~,fHat_Eig] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
-% 
-% % Direct CLDMD for comparison
-% k = 1e5;
-% e = 1e-7;
-% K=KernelvvRKHS('Exponential',k*ones(m+1,1));
-% KT=KernelRKHS('Exponential',k);
-% [~,~,~,r,~] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
+% Indirect CLDMD for comparison
+k = 10;
+e = 1e-3;
+K=KernelvvRKHS('Exponential',k*ones(m+1,1));
+KT=KernelRKHS('Exponential',k);
+[~,~,~,~,fHat_Eig] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,RegTol=e);
+
+% Direct CLDMD for comparison
+k = 1e5;
+e = 1e-7;
+K=KernelvvRKHS('Exponential',k*ones(m+1,1));
+KT=KernelRKHS('Exponential',k);
+[~,~,~,r,~] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,RegTol=e);
 %% Indirect reconstruction
 x0 = [1;-1;1;-1];
 t_pred = 0:0.05:15;
 [~,y_pred_SVD] = ode45(@(t,x) fHat_SVD(x),t_pred,x0);
-% [~,y_pred_Eig] = ode45(@(t,x) fHat_Eig(x),t_pred,x0);
+[~,y_pred_Eig] = ode45(@(t,x) fHat_Eig(x),t_pred,x0);
 [~,y] = ode45(@(t,x) f(x) + g(x) * mu(x),t_pred,x0);
-% y_pred_Eig_dir = zeros(size(y));
-% for i=1:numel(t_pred)
-%     y_pred_Eig_dir(i,:) = r(t_pred(i),x0).';
-% end
+y_pred_Eig_dir = zeros(size(y));
+for i=1:numel(t_pred)
+    y_pred_Eig_dir(i,:) = r(t_pred(i),x0).';
+end
 
 % temp=[t_pred.' y y_pred_SVD];
 % save('2LinkSCLDMDReconstruction.dat','temp','-ascii');
@@ -140,7 +140,8 @@ plot(t_pred,y_pred_SVD,'--','linewidth',2)
 hold off
 xlabel('Time (s)')
 set(gca,'fontsize',16)
-legend('$x_1(t)$','$x_2(t)$','$\hat{x}_1(t)$','$\hat{x}_2(t)$',...
+legend('$x_1(t)$','$x_2(t)$','$x_3(t)$','$x_4(t)$',...
+    '$\hat{x}_1(t)$','$\hat{x}_2(t)$','$\hat{x}_3(t)$','$\hat{x}_4(t)$',...
 'interpreter','latex','fontsize',16,'location','southeast')
 
 figure
@@ -148,21 +149,24 @@ plot(t_pred,y-y_pred_SVD,'linewidth',2)
 xlabel('Time (s)')
 set(gca,'fontsize',16)
 legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
+    '$x_3(t)-\hat{x}_3(t)$','$x_4(t)-\hat{x}_4(t)$',...
 'interpreter','latex','fontsize',16,'location','east')
 
-% figure
-% plot(t_pred,y-y_pred_Eig,'linewidth',2)
-% xlabel('Time (s)')
-% set(gca,'fontsize',16)
-% legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
-% 'interpreter','latex','fontsize',16,'location','east')
-% 
-% figure
-% plot(t_pred,y-y_pred_Eig_dir,'linewidth',2)
-% xlabel('Time (s)')
-% set(gca,'fontsize',16)
-% legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
-% 'interpreter','latex','fontsize',16,'location','east')
+figure
+plot(t_pred,y-y_pred_Eig,'linewidth',2)
+xlabel('Time (s)')
+set(gca,'fontsize',16)
+legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
+    '$x_3(t)-\hat{x}_3(t)$','$x_4(t)-\hat{x}_4(t)$',...
+'interpreter','latex','fontsize',16,'location','east')
+
+figure
+plot(t_pred,y-y_pred_Eig_dir,'linewidth',2)
+xlabel('Time (s)')
+set(gca,'fontsize',16)
+legend('$x_1(t)-\hat{x}_1(t)$','$x_2(t)-\hat{x}_2(t)$',...
+    '$x_3(t)-\hat{x}_3(t)$','$x_4(t)-\hat{x}_4(t)$',...
+'interpreter','latex','fontsize',16,'location','east')
 end
 
 %% auxiliary functions

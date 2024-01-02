@@ -25,7 +25,13 @@
 %           First dimension: Time (size = length of longest trajectory)
 %           Second dimension: Trajectory number
 %    6) mu: A feedback control function compatible with 3D arrays
-%    7) l:  (Optional argument, default=0) Regularization coefficient
+%    7) RegTol:  (Optional argument, default=0) Regularization coefficient
+%    8) PinvTol: (Optional argument, default=0) Pseudoinverse coefficient
+%
+% If RegTol and PinvTol are both nonzero or both zero, or if PinvTol is  
+% supplied but RegTol is not, then pseudoinverse is used to invert Gram 
+% matrices. If RegTol is supplied and PinvTol is not, then regularization 
+% is used to invert Gram matrices.
 %
 % Outputs:
 %    1) Z:  Liouville modes (State dimension x number of modes)
@@ -34,15 +40,21 @@
 %    4) r:  Reconstruction function
 %    5) f:  Vector field
 %
-function [Z,L,ef,r,f] = ControlLiouvilleDMD(KT,K,X,U,t,mu,varargin)
+function [Z,L,ef,r,f] = ControlLiouvilleDMD(KT,K,X,U,t,mu,NameValueArgs)
 
 % Processing optional arguments and setting defaults
-if nargin == 6
-    l = 0; % default
-elseif nargin == 7
-    l = varargin{1};
-elseif nargin > 7
-    error("Too many input arguments.")
+arguments
+    KT
+    K
+    X double
+    U double
+    t double
+    mu
+    NameValueArgs.RegTol (1,1) {mustBeNumeric} = 0
+    NameValueArgs.PinvTol (1,1) {mustBeNumeric} = 0
+end
+if NameValueArgs.RegTol ~= 0 && NameValueArgs.PinvTol ~=0
+    warning('RegTol and PinvTol are both nonzero, defaulting to pseudoinverse. Call with RegTol ~= 0 and PinvTol = 0 to use regularization.');
 end
 
 M = size(X,3); % Number of trajectories
@@ -82,16 +94,42 @@ for i=1:M
 end
 
 % DMD
-GT=GT+l*eye(size(GT)); % Regularization
-G=G+l*eye(size(G)); % Regularization
-[V,D] = eig(GT\(I*(G\IT.'))); % Eigendecomposition of the finite rank representation
+% Gram matrix inverse using regularization or pseudoinverse
+if NameValueArgs.PinvTol == 0 && NameValueArgs.RegTol == 0
+    GTInv = pinv(GT);
+    GInv = pinv(G);
+    FRR=GTInv*I*GInv*IT.';
+    % disp('Inverting Gram matrices using pseudoinverse.')
+elseif NameValueArgs.PinvTol ~= 0
+    GTInv = pinv(GT,NameValueArgs.PinvTol);
+    GInv = pinv(G,NameValueArgs.PinvTol);
+    FRR=GTInv*I*GInv*IT.';
+    % disp('Inverting Gram matrices using pseudoinverse.')
+elseif NameValueArgs.RegTol ~= 0
+    GT=GT+NameValueArgs.RegTol*eye(size(GT)); % Regularization
+    G=G+NameValueArgs.RegTol*eye(size(G)); % Regularization
+    FRR = GT\(I*(G\IT.'));
+    % disp('Inverting Gram matrices using regularization.')
+end
+
+[V,D] = eig(FRR); % Eigendecomposition of the finite rank representation
 L = diag(D); % Eigenvalues of the finite-rank representation
 C = V./diag(sqrt(V'*GT*V)).'; % Normalized eigenvectors of finite rank representation
 
 % Reconstruction
 ef = @(x) C.'*squeeze(pagemtimes(KT.K(x,X),w)); % Eigenfunctions evaluated at x
 IntMat = reshape(pagemtimes(X,w),n,M); % Integrals of trajectories
-Z = IntMat/(C.'*GT); % Control Liouville modes
+
+if NameValueArgs.PinvTol == 0 && NameValueArgs.RegTol == 0
+    CGTInv = pinv(C.'*GT);
+    Z = IntMat*CGTInv; % Control Liouville modes
+elseif NameValueArgs.PinvTol ~= 0
+    CGTInv = pinv(C.'*GT,NameValueArgs.PinvTol);
+    Z = IntMat*CGTInv; % Control Liouville modes
+elseif NameValueArgs.RegTol ~= 0
+    Z = IntMat/(C.'*GT); % Control Liouville modes
+end
+
 r = @(t,x) real(Z*(ef(x).*exp(L*t))); % Reconstruction function
 f = @(x) real(Z*(L.*ef(x))); % vectorfield
 end
