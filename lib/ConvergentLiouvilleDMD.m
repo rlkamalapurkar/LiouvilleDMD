@@ -52,11 +52,12 @@ arguments
     Kr
     X double
     t double
-    NameValueArgs.RegTol (1,1) {mustBeNumeric} = 0
-    NameValueArgs.PinvTol (1,1) {mustBeNumeric} = 0
+    NameValueArgs.RegTol (1,1) {mustBeNumeric} = NaN
+    NameValueArgs.PinvTol (1,1) {mustBeNumeric} = NaN
 end
-if NameValueArgs.RegTol ~= 0 && NameValueArgs.PinvTol ~=0
+if ~isnan(NameValueArgs.RegTol) && ~isnan(NameValueArgs.PinvTol)
     warning('RegTol and PinvTol are both nonzero, defaulting to pseudoinverse. Call with RegTol ~= 0 and PinvTol = 0 to use regularization.');
+    NameValueArgs.RegTol = NaN;
 end
     
 M = size(X,3); % Total number of trajectories
@@ -73,13 +74,13 @@ for i=1:M
 end
 
 % DMD
-if NameValueArgs.PinvTol == 0 && NameValueArgs.RegTol == 0
+if (isnan(NameValueArgs.PinvTol) && isnan(NameValueArgs.RegTol)) || (~isnan(NameValueArgs.PinvTol) && NameValueArgs.PinvTol == 0)
     GrInv = pinv(Gr);
     disp('Inverting Gram matrices using pseudoinverse.')
-elseif NameValueArgs.PinvTol ~= 0
+elseif ~isnan(NameValueArgs.PinvTol)
     GrInv = pinv(Gr,NameValueArgs.PinvTol);
     disp('Inverting Gram matrices using pseudoinverse.')
-elseif NameValueArgs.RegTol ~= 0
+elseif ~isnan(NameValueArgs.RegTol)
     GrInv = inv(Gr + NameValueArgs.RegTol*eye(size(Gr)));
     disp('Inverting Gram matrices using regularization.')
 end

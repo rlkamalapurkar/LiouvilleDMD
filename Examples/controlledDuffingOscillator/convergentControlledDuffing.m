@@ -58,7 +58,6 @@ SampleTime = cell2mat(cellfun(@(x) [x;NaN(maxLength-length(x),1)],...
 %% Kernels
 
 % Best kernel parameters for pseudoinverse
-e = 0;
 kd = 7;
 Kd=KernelRKHS('Exponential',kd);
 k = 6;
@@ -79,7 +78,7 @@ Kr=KernelRKHS('Exponential',kr);
 mu = @(x) -2*x(1,:,:) - 1*x(2,:,:);
 
 %% SCLDMD
-[~,~,~,~,fHat_SVD] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,SampleTime,mu,RegTol=e);
+[~,~,~,~,fHat_SVD] = ConvergentControlLiouvilleDMD(Kd,Kr,K,X,U,SampleTime,mu);
 
 % Indirect CLDMD for comparison
 ke = 5;

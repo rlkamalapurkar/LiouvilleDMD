@@ -50,11 +50,12 @@ arguments
     U double
     t double
     mu
-    NameValueArgs.RegTol (1,1) {mustBeNumeric} = 0
-    NameValueArgs.PinvTol (1,1) {mustBeNumeric} = 0
+    NameValueArgs.RegTol (1,1) {mustBeNumeric} = NaN
+    NameValueArgs.PinvTol (1,1) {mustBeNumeric} = NaN
 end
-if NameValueArgs.RegTol ~= 0 && NameValueArgs.PinvTol ~=0
+if ~isnan(NameValueArgs.RegTol) && ~isnan(NameValueArgs.PinvTol)
     warning('RegTol and PinvTol are both nonzero, defaulting to pseudoinverse. Call with RegTol ~= 0 and PinvTol = 0 to use regularization.');
+    NameValueArgs.RegTol = NaN;
 end
 
 M = size(X,3); % Number of trajectories
@@ -89,17 +90,17 @@ for i=1:M
 end
 
 % DMD
-if NameValueArgs.PinvTol == 0 && NameValueArgs.RegTol == 0
+if (isnan(NameValueArgs.PinvTol) && isnan(NameValueArgs.RegTol)) || (~isnan(NameValueArgs.PinvTol) && NameValueArgs.PinvTol == 0)
     GrInv = pinv(Gr);
     GbInv = pinv(Gb);
     FRR=GrInv*I*GbInv;
     % disp('Inverting Gram matrices using pseudoinverse.')
-elseif NameValueArgs.PinvTol ~= 0
+elseif ~isnan(NameValueArgs.PinvTol)
     GrInv = pinv(Gr,NameValueArgs.PinvTol);
     GbInv = pinv(Gb,NameValueArgs.PinvTol);
     FRR=GrInv*I*GbInv;
     % disp('Inverting Gram matrices using pseudoinverse.')
-elseif NameValueArgs.RegTol ~= 0
+elseif ~isnan(NameValueArgs.RegTol)
     Gr=Gr+NameValueArgs.RegTol*eye(size(Gr)); % Regularization
     Gb=Gb+NameValueArgs.RegTol*eye(size(Gb)); % Regularization
     FRR=Gr\(I/Gb);
@@ -113,5 +114,6 @@ lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,N(l),l)),(1:M).') ...
     - arrayfun(@(l) Kd.K(x,X(:,1,l)),(1:M).')); % Left singular functions evaluated at x
 
 % SysID
-f = @(x) real(D*FRR.'*squeeze(pagemtimes(Kr.K(x,X),w))); % Vector field
+temp=D*FRR.';
+f = @(x) real(temp*squeeze(pagemtimes(Kr.K(x,X),w))); % Vector field
 end
