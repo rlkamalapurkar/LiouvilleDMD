@@ -93,5 +93,5 @@ lsf = @(x) V.'*(arrayfun(@(l) Kd.K(x,X(:,N(l),l)),(1:M).') ...
 
 % SysID
 temp=D*GrInv;
-f = @(x) real(temp*squeeze(pagemtimes(Kr.K(x,X),w))); % Vector field
+f = @(x) temp*squeeze(pagemtimes(Kr.K(x,X),w)); % Vector field
 end
