@@ -46,6 +46,8 @@ plot(time,reconstructionError);hold on;plot(time,reconstructionErrorWilliams);ho
 legend("Gonzalez et al.","Williams et al.");
 xlabel("t [s]");
 ylabel("Norm of the relative reconstruction error")
+figure
+plot(time,reconstructionError-reconstructionErrorWilliams);
 reconstructionError = [time reconstructionError];
 save('KoopmanError.dat','reconstructionError','-ascii');
 reconstructionErrorWilliams = [time reconstructionErrorWilliams];

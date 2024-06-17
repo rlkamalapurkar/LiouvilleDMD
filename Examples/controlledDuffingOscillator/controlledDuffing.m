@@ -62,7 +62,7 @@ KT=KernelRKHS('Exponential',kT);
 mu = @(x) -2*x(1,:,:) - 1*x(2,:,:);
 
 %% CLDMD
-[~,~,~,r,fHat] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu,e);
+[~,~,~,r,fHat] = ControlLiouvilleDMD(KT,K,X,U,SampleTime,mu);
 
 %% Indirect reconstruction
 x0 = [2;-2];

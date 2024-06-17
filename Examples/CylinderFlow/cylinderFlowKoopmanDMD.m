@@ -33,7 +33,6 @@ Length = 150; % Number of snapshots used for DMD. Should be between 1 and
              % 150, cannot be 150 if PlotPrediction is ON.
 h = 0.02; % Time step
 Width = 449; % Width needed for plotting only
-l = 1e-10; % Gram matrix regularization parameter
 
 Dimension = size(DATA,1);
 % Input values X
@@ -43,7 +42,7 @@ Y = DATA(:,2:Length+1);
 
 %% Kernel DMD
 tic
-[~,~,~,ContinuousReconFun,DiscreteReconFun,~] = KoopmanDMD(X,Y,K,h,l);
+[~,~,~,~,DiscreteReconFun,~] = KoopmanDMD(X,Y,K,h);
 toc
 %% Video
 if ShowReconVideo || SaveReconVideo

@@ -15,7 +15,8 @@ PrintModes = 0;
 TotalModesToDisplay = 10;
 sortmodes='custom'; % coefficients, eigenvalues, norm, or normcoeff
 ShowVideo = 1;
-SaveVideo = 0;
+SaveVideo = 1;
+SaveFrames = 0;
 PrintReconstruction = 0;
 GramMatrixRegularizationParameter = 1e-5;
 
@@ -98,7 +99,7 @@ end
     LiouvilleDMD(K,Trajectories,SampleTime,1,GramMatrixRegularizationParameter);
 
 %% Video
-if ShowVideo || SaveVideo
+if ShowVideo || SaveVideo || SaveFrames
     if SaveVideo
         filename = ['cyl-' K.type '-liouville-reconstruction.mp4'];
         v = VideoWriter(filename, 'MPEG-4');
@@ -136,6 +137,10 @@ if ShowVideo || SaveVideo
         title(['True  $x(' num2str(t) ')$'],'FontSize',20,'Interpreter','latex','Units', 'normalized', 'Position', [0.5, 0.9, 0]);
         set(gca,'YTickLabel',[],'XTickLabel',[],'XColor', 'none','YColor','none');
         drawnow;
+        if SaveFrames
+            filename = ['image-' num2str(i-1) '.png'];
+            saveas(gcf,filename);
+        end
         if SaveVideo
             frame = getframe(gcf);
             writeVideo(v,frame);

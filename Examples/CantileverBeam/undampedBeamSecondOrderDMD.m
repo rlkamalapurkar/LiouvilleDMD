@@ -10,7 +10,7 @@ addpath('../../lib');
 
 %% Parameters
 directReconstruction = 0; % Do direct reconstruction (indirect by default)
-showVideo = 0; % Show reconstruction animation
+showVideo = 1; % Show reconstruction animation
 saveVideo = 0; % Save animation as mp4 video
 printReconstruction = 0; % Save reconstruction snapshots
 printGeneralization = 0; % Save generalization and comparison plots
@@ -109,6 +109,8 @@ if showVideo || saveVideo
         clim([0 2.5e-3]);
         ylim([-0.02,0.12]);
         xlim([1,5]);
+        filename = ['image-' num2str(i-1) '.png'];
+        saveas(gcf,filename);
         drawnow;
     end
 end
