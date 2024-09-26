@@ -11,13 +11,13 @@ deltaT = 1;
 mu = 0.00001;
 K = KernelRKHS('Gaussian',mu); 
 [~,~,~,~,dr,~] = KoopmanDMD(W,V,K,deltaT);
-% [~,~,~,~,drW,~] = WilliamsKDMD(W,V,K,deltaT);
+[~,~,~,~,drW,~] = WilliamsKDMD(W,V,K,deltaT);
 reconstructionError = zeros(numel(121:1000),1);
-% reconstructionErrorW = zeros(numel(121:1000),1);
+reconstructionErrorW = zeros(numel(121:1000),1);
 x = X(:,121)/normalizationFactor;
 for i=1:numel(reconstructionError)
     reconstructionError(i) = norm(X(:,121+i)/normalizationFactor - dr(i,x));
-    % reconstructionErrorW(i) = norm(X(:,121+i)/normalizationFactor - drW(i,x));
+    reconstructionErrorW(i) = norm(X(:,121+i)/normalizationFactor - drW(i,x));
 end
 plot(reconstructionError);
 hold on;plot(reconstructionErrorW);hold off;
