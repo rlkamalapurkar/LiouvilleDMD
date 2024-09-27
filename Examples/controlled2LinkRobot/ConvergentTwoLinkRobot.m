@@ -56,7 +56,7 @@ for i = 1:M
     u = @(t) [sum(coeff(1:15,:).*sin(t.*freq(1:15,:) + phase(1:15,:)))
               sum(coeff(16:30,:).*sin(t.*freq(16:30,:) + phase(16:30,:)))];
     F = @(t,x) f(x) + g(x) * u(t); % The update function
-    [t,y] = ode45(F,0:ts:T,IV(:,i));
+    [t,y] = ode45(F,0:ts:T(i),IV(:,i));
     X(:,:,i) = y.';
     U(:,:,i) = u(t.');
 end

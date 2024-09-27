@@ -13,10 +13,10 @@
 % only in their parameter. The parameter values are supplied by the user as
 % a column vector.
 %
-% The kernel functions are written to accept column vector, matrix, 
-% or 3D array inputs. The two inputs X and Y have to be the same size in 
-% dimensions 1 and 2. If they have different number of pages, one of them 
-% has to be a single page. 
+% The kernel functions accept column vector, matrix, or 3D array inputs. 
+% The two inputs X and Y have to be the same size in dimensions 1 and 2. 
+% If they have different number of pages, one of them has to be a single
+% page. 
 % 
 % The class method obj.K returns a u x u x p x m array M, where
 % u = size(X,2), m = size(parameter,1) and p = max(size(X,3), size(Y,3)) 

@@ -45,7 +45,7 @@ for i = 1:M
     phase = -1 + 2*rand(15,1);
     u = @(t) sum(coeff.*sin(t.*freq + phase)); % t is a row vector
     F = @(t,x) f(x) + g(x) * u(t); % The update function
-    [t,y] = ode45(F,0:ts:T,IV(:,i));
+    [t,y] = ode45(F,0:ts:T(i),IV(:,i));
     X(:,:,i) = y.';
     U(:,:,i) = u(t.');
 end
