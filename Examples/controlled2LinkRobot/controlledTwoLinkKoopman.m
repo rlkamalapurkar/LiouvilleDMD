@@ -66,7 +66,7 @@ mu = @(x) cat(1, -5*x(1,:,:) - 5*x(2,:,:), -15*x(1,:,:) - 15*x(2,:,:));
 [~,~,~,~,dr,fHat] = ControlKoopmanDMD(KT,K,X,U,Y,ts,mu,l);
 
 %% Indirect discrete reconstruction
-t_pred = 0:0.05:6;
+t_pred = 0:0.05:5;
 y = zeros(n,numel(t_pred));
 y(:,1) = [1;-1;1;-1];
 y_pred = zeros(n,numel(t_pred));

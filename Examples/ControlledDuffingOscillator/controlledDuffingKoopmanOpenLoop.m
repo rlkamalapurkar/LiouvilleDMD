@@ -1,10 +1,10 @@
 % This script generates trajectories of a controlled Duffing oscillator
-% uses control Liouville DMD to generate a predictive model for a given 
-% feedback controller.
+% and uses control Koopman DMD to generate a predictive model for a given 
+% control signal.
 %
-% © Rushikesh Kamalapurkar and Zachary Morrison
-function controlledDuffingKoopman()
-
+% © Rushikesh Kamalapurkar and Moad Abudia, 2025
+function controlledDuffingKoopmanOpenLoop()
+%rng(1) % added to reproduce the plots in the paper, delete to randomize
 addpath('../../lib');
 
 %% Generate Trajectories
@@ -19,7 +19,7 @@ IV_selection = 'grid';
 samp_min = -3;
 samp_max = 3;
 if strcmp(IV_selection,'grid')
-    pointsPerDim = 15;
+    pointsPerDim = 9;
     XDim = linspace(samp_min,samp_max,pointsPerDim);
     [XX,YY] = meshgrid(XDim,XDim);
     X = [XX(:) YY(:)].';
@@ -37,33 +37,41 @@ elseif strcmp(IV_selection,'halton')
 else
     error('Unknown IV selection mode %s', IV_selection)
 end
-ts = 0.01;
-U = (-2+4*rand(1,M));
-Y=zeros(size(X));
+ts = 0.1;
+U = -2+4*rand(1,M);
+Y = zeros(size(X));
 for i = 1:M
     F = @(x,u) f(x) + g(x) * u; % The update function
     [~,y] = ode45(@(t,x) F(x,U(:,i)),[0,ts],X(:,i));
     Y(:,i) = y(end,:).';
 end
 %% Kernels
-kT = 10;
-k = 10;
+kT = 20;
+k = 20;
 l = 1e-6;
 
-K=KernelvvRKHS('Gaussian',k*ones(m+1,1));
-KT=KernelRKHS('Gaussian',kT);
+K=KernelvvRKHS('Exponential',k*ones(m+1,1));
+KT=KernelRKHS('Exponential',kT);
 
-%% Feedback controller
-mu = @(x) -2*x(1,:) - x(2,:);
+%% Controller
+u = @(t) 1*sin(t);
 
 %% CLDMD
-[~,~,~,~,dr,fHat] = ControlKoopmanDMD(KT,K,X,U,Y,ts,mu,l);
+fgHat = ControlKoopmanDMDOpenLoop(KT,K,X,U,Y,PinvTol = l);
 
 %% Indirect reconstruction
 x0 = [2;-2];
-t_pred = 0:10*ts:5;
-[~,y_pred] = ode45(@(t,x) fHat(x),t_pred,x0);
-[~,y] = ode45(@(t,x) f(x) + g(x) * mu(x),t_pred,x0);
+t_pred = 0:ts:15;
+U = u(t_pred);
+y = zeros(n,numel(t_pred));
+y(:,1) = x0;
+y_pred = y;
+for i=1:numel(t_pred)-1
+    F = @(x,u) f(x) + g(x) * u; % The update function
+    [~,temp] = ode45(@(t,x) F(x,U(i)),[0,ts],y(:,i));
+    y(:,i+1) = temp(end,:).';
+    y_pred(:,i+1) = fgHat(y_pred(:,i))*[1;U(i)];
+end
 
 % Plots
 plot(t_pred,y,'linewidth',2)
@@ -76,32 +84,6 @@ set(gca,'fontsize',16)
 legend('$x_1(t)$','$x_2(t)$','$\hat{x}_1(t)$','$\hat{x}_2(t)$',...
 'interpreter','latex','fontsize',16,'location','southeast')
 
-%% Indirect discrete reconstruction
-% t_pred = 0:ts:6;
-% y = zeros(n,numel(t_pred));
-% y(:,1) = [2;-2];
-% y_pred = zeros(n,numel(t_pred));
-% y_pred(:,1) = [2;-2];
-% for i=1:numel(t_pred)-1
-% y_pred(:,i+1) = dr(1,y_pred(:,i));
-% [~,temp] = ode45(@(t,x) f(x) + g(x) * mu(x),[0,ts],y(:,i));
-% y(:,i+1) = temp(end,:).';
-% end
-% % Plots
-% plot(t_pred,y,'linewidth',2)
-% hold on
-% set(gca,'ColorOrderIndex',1)
-% plot(t_pred,y_pred,'--','linewidth',2)
-% hold off
-% xlabel('Time (s)')
-% set(gca,'fontsize',16)
-% legend('$x_1(t)$','$x_2(t)$','$\hat{x}_1(t)$','$\hat{x}_2(t)$',...
-% 'interpreter','latex','fontsize',16,'location','southeast')
-% DiscreteReconCompare = [t_pred',y_pred',y']; % data for tikzplot
-% DiscreteReconError = [t_pred',y_pred'-y']; 
-% save('DiscreteReconCompare.dat','DiscreteReconCompare','-ascii');
-% save('DiscreteReconError.dat','DiscreteReconError','-ascii');
-
 %% Vector Field Plot
 % XDimeval = linspace(-2,2,9);
 % [XX, YY] = meshgrid(XDimeval,XDimeval);
@@ -110,10 +92,11 @@ legend('$x_1(t)$','$x_2(t)$','$\hat{x}_1(t)$','$\hat{x}_2(t)$',...
 % x_dot_at_x0 = [];
 % for i=1:size(IVeval,2)
 %     x0=IVeval(:,i);
-%     x_dot_hat_at_x0 = [x_dot_hat_at_x0, fHat(x0)];
-%     x_dot_at_x0 = [x_dot_at_x0, f(x0)+g(x0)*mu(x0)];
+%     temp = fgHat(x0);
+%     x_dot_hat_at_x0 = [x_dot_hat_at_x0, temp(:,1)];
+%     [~,temp] = ode45(@(t,x) F(x,u(t)),[0,ts],x0);
+%     x_dot_at_x0 = [x_dot_at_x0, temp(end,:).'];
 % end
-% %max(max(abs(x_dot_at_x0 - x_dot_hat_at_x0)))
 % figure
 % subplot(2,2,1);
 % surf(XX,YY,reshape(x_dot_hat_at_x0(1,:),9,9))
@@ -140,12 +123,4 @@ legend('$x_1(t)$','$x_2(t)$','$\hat{x}_1(t)$','$\hat{x}_2(t)$',...
 % zlabel('$\left(f(x) + g(x)\mu(x)\right)_2$','interpreter','latex','fontsize',16)
 % set(gca,'fontsize',16)
 
-end
-
-%% auxiliary functions
-function out = oddLength(dt,tf)
-    out = 0:dt:tf;
-    if mod(numel(out),2)==0
-        out = out(1:end-1);
-    end
 end

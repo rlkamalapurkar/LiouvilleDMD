@@ -1,1 +1,9 @@
 Precompiled
+.DS_Store
+Examples/BuildingFlow/ReconstructionExperimentKoopmanDMD.mat
+Examples/BuildingFlow/WilliamsComparison.mat
+Examples/CylinderFlow/KoopmanError.dat
+Examples/CylinderFlow/WilliamsError.dat
+Examples/DuffingOscillator/codegen/mex/LiouvilleDMD/html/report.mldatx
+Examples/DuffingOscillator/Copy_of_DuffingOscillatorConvergentEigenDMD.m
+lib/ConvergentLiouvilleDMDEig.m
