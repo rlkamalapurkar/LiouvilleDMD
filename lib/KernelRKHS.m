@@ -32,6 +32,8 @@
 % N(i,j,k) = z^T * k(X(:,i,k),Y(:,j,1)) if size(Y,3) = 1, and
 % N(i,j,k) = z^T * k(X(:,i,1),Y(:,j,k)) if size(X,3) = 1.
 %
+% The function G2K has not yet been implemented for Wendland kernels
+%
 % © Rushikesh Kamalapurkar
 %
 classdef KernelRKHS
@@ -118,13 +120,14 @@ classdef KernelRKHS
             if isequal(obj.type,'Gaussian')
                 y = (2/obj.p(1))*(pagemtimes(X,'transpose',Z,'none') - pagemtimes(Z,'transpose',Y,'none')).*obj.K(X,Y);
             elseif isequal(obj.type,'Wendland')
-                if obj.p(3) == 0
-                    error('Wendland kernel with smoothness 0 is not differentiable')
-                end
-                X = X./obj.p(1);
-                Y = Y./obj.p(1);
-                r = sqrt(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none'));
-                y = ((r<=1).*polyval(obj.diffCoeffs,r)).*(pagemtimes(Y - X,'transpose',Z,'none'));
+                error("Gradient calculations for Wendland kernels are not available yet.")
+                % if obj.p(3) == 0
+                %     error('Wendland kernel with smoothness 0 is not differentiable')
+                % end
+                % X = X./obj.p(1);
+                % Y = Y./obj.p(1);
+                % r = sqrt(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none'));
+                % y = ((r<=1).*polyval(obj.diffCoeffs,r)).*(pagemtimes(Y - X,'transpose',Z,'none'));
             elseif isequal(obj.type,'Exponential')
                 y = 1/obj.p(1)*pagemtimes(X,'transpose',Z,'none').*obj.K(X,Y);
             elseif isequal(obj.type,'Linear') || isequal(obj.type,'Polynomial')

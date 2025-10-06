@@ -52,8 +52,8 @@ elseif nargin > 5
 end
 
 % Check kernel parameter compatibility
-mu = K.parameter;
-muT = KT.parameter;
+mu = K.p;
+muT = KT.p;
 if mu < muT
     warning('Parameters incompatible with convergent DMD');
 end

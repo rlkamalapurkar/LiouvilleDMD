@@ -1,9 +1,11 @@
-% The KernelVectorRKHS class implements vector-valued versions of
+% The KernelvvRKHS class implements vector-valued versions of
 % the following kernels:
 %
 % 'Exponential', 
 % 'Gaussian'
 % 'Linear'
+% 'Wendland34' (C4 smoothness in 3D)
+% 'Wendland54' (C4 smoothness in 3D)
 %
 % For now, only diagonal kernel operators of the form
 % 

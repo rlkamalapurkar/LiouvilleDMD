@@ -75,13 +75,9 @@ RMSi2 = zeros(numTrials,1); %
 % K = KernelRKHS('Gaussian',mu);
 
 % Exponential, second order
-% mu2 = 25;
-% Regularization2 = 7e-6;
-% K2 = KernelRKHS('Exponential',mu2);
-
-mu2 = [2.5;3;2]; 
-K2 = KernelRKHS('Wendland34',1.95);
-Regularization2=1e-8;
+mu2 = 25;
+Regularization2 = 7e-6;
+K2 = KernelRKHS('Exponential',mu2);
 
 % Exponential, first order
 mu1 = 190; 
