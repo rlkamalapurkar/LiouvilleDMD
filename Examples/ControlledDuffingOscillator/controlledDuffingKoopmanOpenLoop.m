@@ -46,12 +46,12 @@ for i = 1:M
     Y(:,i) = y(end,:).';
 end
 %% Kernels
-kT = 20;
-k = 20;
-l = 1e-6;
+kT = 40;
+k = 40;
+l = 1e-8;
 
-K=KernelvvRKHS('Exponential',k*ones(m+1,1));
-KT=KernelRKHS('Exponential',kT);
+K=KernelvvRKHS('Wendland34',k*ones(m+1,1));
+KT=KernelRKHS('Wendland',[40,3,4]);
 
 %% Controller
 u = @(t) 1*sin(t);

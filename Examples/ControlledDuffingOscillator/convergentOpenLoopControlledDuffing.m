@@ -10,7 +10,7 @@ addpath('../../lib');
 %% Generate Trajectories
 n = 2; % Number of dimensions that f maps from/to
 m = 1; % Dimensions of the controller
-f = @(x) [x(2) ; x(1) - x(1)^3];
+f = @(x) [x(2) ; x(1) - x(2) - x(1)^3];
 g = @(x) [0 ; 2 + sin(x(1))];
 IV_selection = 'grid'; 
 samp_min = -3;
@@ -71,7 +71,7 @@ K=KernelvvRKHS('Exponential',k*ones(m+1,1));
 
 %% Indirect reconstruction
 x0 = [2;-2];
-t_pred = 0:0.1:10;
+t_pred = 0:0.1:50;
 u = @(t) sin(t) + cos(2*t);
 [~,y_pred_SVD] = ode45(@(t,x) fg_SVD(x)*[1;u(t)],t_pred,x0);
 [~,y] = ode45(@(t,x) f(x) + g(x)*u(t),t_pred,x0);

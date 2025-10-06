@@ -59,6 +59,17 @@ function LorenzKoopmanDMD()
     % % Reconstruction 
     tfRec = 5; % Final time for reconstruction
     Tc=0:0.1:tfRec; % Time vector for reconstruction
+
+    x = [10;10;10];
+    [~,y]=ode45(@(t,x) xDot(t,x),Tc,x);
+    [~,ycv]=ode45(@(t,x) fc(x),Tc,x);
+    figure()
+    plot(Tc,y,"LineStyle","-.","LineWidth",2);
+    hold on
+    plot(Tc,ycv,"LineStyle","-","LineWidth",2);
+    legend('True x1','True x2','True x3','Reconstructed x1','Reconstructed x2','Reconstructed x3');title('Reconstruction');
+    hold off
+    figure()
     XRec = [-7.5 + 15*rand(1,100);
         -7.5 + 15*rand(1,100);
         -7.5 + 15*rand(1,100)]; % Initial conditions for reconstruction

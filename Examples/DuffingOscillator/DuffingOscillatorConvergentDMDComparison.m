@@ -13,6 +13,7 @@ alpha = 1;
 beta = -1;
 delta = 0.011;
 xDot = @(t,x) [x(2);-delta*x(2)-beta*x(1)-alpha*x(1)^3];
+n = 2
 
 % Initial conditions, 10 grid points per dimension in a 5 x 5 square 
 % centered at the origin, 100 initial conditions
@@ -22,7 +23,7 @@ X = linspace(-range,range,pointsPerDim);
 [XX,YY] = meshgrid(X,X);
 x0 = [XX(:) YY(:)].';
 
-numTraj = size(x0,2);
+numTraj = size(x0,n);
 % Sample time
 deltaT = 0.05;
 
@@ -41,7 +42,7 @@ SampleTime = cell2mat(cellfun(@(x) [x;NaN(maxLength-length(x),1)],...
 Output=zeros(1,size(SampleTime,1),numTraj); 
 Derivatives=zeros(1,numTraj);
 % Full state for first order DMD
-State=zeros(2,size(SampleTime,1),numTraj);
+State=zeros(n,size(SampleTime,1),numTraj);
 
 % Generate data
 for i=1:numTraj

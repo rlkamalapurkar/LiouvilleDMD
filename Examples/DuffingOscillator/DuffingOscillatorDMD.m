@@ -4,7 +4,7 @@
 % © Rushikesh Kamalapurkar and Joel Rosenfeld
 %
 function DuffingOscillatorDMD()
-	
+	close all
 addpath('../../lib')
 %% Generate and format data for DMD
 
@@ -59,6 +59,10 @@ end
 mu1 = 190; 
 K1 = KernelRKHS('Exponential',mu1);
 Regularization1=1e-8;
+
+% mu1 = [45;5;2]; 
+% K1 = KernelRKHS('Wendland',mu1);
+% Regularization1=1e-8;
 
 %% Liouville DMD
 ScalingFactor = 0.5;

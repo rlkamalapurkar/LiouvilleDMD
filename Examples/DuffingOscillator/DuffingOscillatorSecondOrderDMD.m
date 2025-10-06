@@ -5,7 +5,7 @@
 % © Rushikesh Kamalapurkar, Ben Russo, and Joel Rosenfeld
 %
 function DuffingOscillatorSecondOrderDMD()
-	
+close all	
 addpath('../../lib')
 %% Dataset parameters
 
@@ -75,9 +75,13 @@ RMSi2 = zeros(numTrials,1); %
 % K = KernelRKHS('Gaussian',mu);
 
 % Exponential, second order
-mu2 = 25;
-Regularization2 = 7e-6;
-K2 = KernelRKHS('Exponential',mu2);
+% mu2 = 25;
+% Regularization2 = 7e-6;
+% K2 = KernelRKHS('Exponential',mu2);
+
+mu2 = [2.5;3;2]; 
+K2 = KernelRKHS('Wendland34',1.95);
+Regularization2=1e-8;
 
 % Exponential, first order
 mu1 = 190; 
@@ -191,7 +195,7 @@ if numTrials > 1
 end
 
 figure
-XX = -10:0.5:10;
+XX = -5:0.5:5;
 F2 = zeros(size(XX));
 F = zeros(size(XX));
 for i = 1:numel(XX)
