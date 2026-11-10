@@ -60,15 +60,20 @@ classdef KernelvvRKHS
             if isequal(obj.type,'Gaussian')
                 y = exp(pagemtimes(reshape(-1./obj.p,1,1,1,numel(obj.p)),repmat(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none'),1,1,1,numel(obj.p))));
             elseif isequal(obj.type,'Wendland34')
-                X = X./obj.p;
-                Y = Y./obj.p;
-                r = sqrt(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none'));
-                y = repmat(max(0,(1-r).^6).*(35*r.^2+18*r+3),1,1,1,numel(obj.p));
+                r2 = pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) ...
+                    - 2*pagemtimes(X,'transpose',Y,'none');
+                r = sqrt(max(0,r2));
+                r_scaled = r .* reshape(1./obj.p,1,1,1,numel(obj.p));
+                y = max(0,1-r_scaled).^6 .* ...
+                    (35*r_scaled.^2 + 18*r_scaled + 3)./3;
+
             elseif isequal(obj.type,'Wendland54')
-                X = X./obj.p;
-                Y = Y./obj.p;
-                r = sqrt(pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) - 2*pagemtimes(X,'transpose',Y,'none'));
-                y = repmat(max(0,(1-r).^7).*(16*r.^2+7.*r+1),1,1,1,numel(obj.p));
+                r2 = pagetranspose(sum(X.^2,1)) + sum(Y.^2,1) ...
+                    - 2*pagemtimes(X,'transpose',Y,'none');
+                r = sqrt(max(0,r2));
+                r_scaled = r .* reshape(1./obj.p,1,1,1,numel(obj.p));
+                y = max(0,1-r_scaled).^7 .* ...
+                    (16*r_scaled.^2 + 7*r_scaled + 1);
             elseif isequal(obj.type,'Exponential')
                 y = exp(pagemtimes(reshape(1./obj.p,1,1,1,numel(obj.p)),repmat(pagemtimes(X,'transpose',Y,'none'),1,1,1,numel(obj.p))));
             elseif isequal(obj.type,'Linear')
