@@ -5,7 +5,7 @@
 % 'Gaussian'
 % 'Linear'
 % 'Wendland34' (C4 smoothness in 3D)
-% 'Wendland54' (C4 smoothness in 3D)
+% 'Wendland54' (C4 smoothness in 5D)
 %
 % For now, only diagonal kernel operators of the form
 % 
@@ -74,7 +74,7 @@ classdef KernelvvRKHS
             elseif isequal(obj.type,'Linear')
                 y = pagemtimes(reshape(1./obj.p,1,1,1,numel(obj.p)),repmat(pagemtimes(X,'transpose',Y,'none'),1,1,1,numel(obj.p)));
             else
-                error(['Kernel type' obj.type 'not implemented']);
+                error(sprintf('Kernel type ''%s'' not implemented', obj.type));
             end
         end
     end
