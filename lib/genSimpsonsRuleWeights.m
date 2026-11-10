@@ -50,13 +50,13 @@ function weights = genSimpsonsRuleWeights(t,dim)
         else
             alpha_i = (2.*h(:,j+1).^3-h(:,j).^3+3.*h(:,j).*h(:,j+1).^2)./...
                 (6.*h(:,j+1).*(h(:,j+1)+h(:,j)));
-            alpha_i(isnan(h(j+1,:)))=0;
+            alpha_i(isnan(h(:,j+1)))=0;
             beta_i = (h(:,j+1).^3+h(:,j).^3+3.*h(:,j+1).*h(:,j).*(h(:,j+1)+h(:,j)))./...
                 (6.*h(:,j+1).*h(:,j));
-            beta_i(isnan(h(j+1,:)))=0;
+            beta_i(isnan(h(:,j+1)))=0;
             eta_i = (2.*h(:,j).^3-h(:,j+1).^3+3.*h(:,j+1).*h(:,j).^2) ./...
                 (6.*h(:,j).*(h(:,j+1)+h(:,j)));
-            eta_i(isnan(h(j+1,:)))=0;
+            eta_i(isnan(h(:,j+1)))=0;
             weights(:,j) = weights(:,j)+eta_i;
             weights(:,j+1) = weights(:,j+1)+beta_i;
             weights(:,j+2) = weights(:,j+2)+alpha_i;
